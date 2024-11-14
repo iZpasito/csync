@@ -16,9 +16,9 @@
     },
     "android": {
       "permissions": [
-               "CAMERA",
-               "ACCESS_FINE_LOCATION"
-           ],
+        "CAMERA",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -33,7 +33,8 @@
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
-      ]
+      ],
+      "expo-router"
     ]
   }
 }
