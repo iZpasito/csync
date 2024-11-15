@@ -94,9 +94,6 @@ const CalendarScreen = () => {
     <View style={styles.container}>
       <Agenda
         items={items}
-        loadItemsForMonth={(month) => {
-          // Puedes cargar eventos para el mes si tienes datos externos.
-        }}
         onDayPress={(day) => handleAddPhoto(day)}
         selected={new Date().toISOString().split('T')[0]}
         renderItem={renderItem}
