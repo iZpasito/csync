@@ -1,25 +1,28 @@
-import React from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
+import Tareas from '../Models/ModelTask';
 
 const HomeScreen = ({ navigation }) => {
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    Tareas.getTasks(setTasks);
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Tareas destacadas</Text>
 
-      <View style={styles.task}>
-        <Text style={styles.taskTitle}>Hora con el Doctor</Text>
-        <Text style={styles.taskTime}>11:00 - 12:00</Text>
-        <Text style={styles.taskDescription}>Descripción explicativa sobre cómo funciona la tarea destacada.</Text>
-      </View>
-
-      <View style={styles.task}>
-        <Text style={styles.taskTitle}>Reunión importante</Text>
-        <Text style={styles.taskTime}>13:30 - 15:00</Text>
-        <Text style={styles.taskDescription}>Descripción explicativa sobre cómo funciona la tarea destacada.</Text>
-      </View>
+      {tasks.map((task, index) => (
+        <View key={index} style={styles.task}>
+          <Text style={styles.taskTitle}>{task.title}</Text>
+          <Text style={styles.taskTime}>{task.time}</Text>
+          <Text style={styles.taskDescription}>{task.description}</Text>
+        </View>
+      ))}
 
       <Button title="Agregar Tarea" onPress={() => navigation.navigate('Tasks')} />
-    </View>
+    </ScrollView>
   );
 };
 
@@ -27,16 +30,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#343a40', // Fondo oscuro
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     marginBottom: 20,
     textAlign: 'center',
     fontWeight: 'bold',
+    color: '#f8f9fa', // Color blanco para destacar el título
   },
   task: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#495057', // Fondo más oscuro para cada tarea
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
@@ -50,15 +54,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#ffffff',
   },
   taskTime: {
     fontSize: 16,
-    color: '#6c757d',
+    color: '#ced4da',
     marginBottom: 5,
   },
   taskDescription: {
     fontSize: 14,
-    color: '#495057',
+    color: '#adb5bd',
   },
 });
 
