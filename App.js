@@ -2,7 +2,6 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { SQLiteProvider } from 'expo-sqlite';
 
 // Importar las pantallas desde la carpeta screen
 import HomeScreen from './screen/HomeScreen';
@@ -14,7 +13,6 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <SQLiteProvider databaseName="CsyncDB.db">
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={({ route }) => ({
@@ -43,6 +41,5 @@ export default function App() {
           <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
       </NavigationContainer>
-    </SQLiteProvider>
   );
 }
