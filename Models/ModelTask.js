@@ -1,88 +1,94 @@
 import * as SQLite from 'expo-sqlite/next';
 
-class Tareas {
+class Task {
   static db = null;
 
-  // Inicializar la base de datos
+  // Initialize the database
   static async initDB() {
-    if (Tareas.db === null) {
-      Tareas.db = SQLite.openDatabase('CsyncDB.db');
+    if (Task.db === null) {
+      Task.db = await SQLite.openDatabaseAsync('CsyncDB.db');
     }
   }
 
-  // Crear una nueva tarea
+  // Create a new task
   static async createTask(title, description, status, time) {
-    await Tareas.initDB();
+    await Task.initDB();
     const createdAt = new Date().toISOString();
-    await new Promise((resolve, reject) => {
-      Tareas.db.transaction(tx => {
-        tx.executeSql(
-          `INSERT INTO tasks (title, description, status, time, created_at) VALUES (?, ?, ?, ?, ?)`,
-          [title, description, status, time, createdAt],
-          () => resolve(),
-          (_, error) => reject(error)
-        );
+    const statement = await Task.db.prepareAsync(
+      'INSERT INTO tasks (title, description, status, time, created_at) VALUES ($title, $description, $status, $time, $createdAt)'
+    );
+    try {
+      const result = await statement.executeAsync({
+        $title: title,
+        $description: description,
+        $status: status,
+        $time: time,
+        $createdAt: createdAt,
       });
-    });
+      console.log('Task created:', result.lastInsertRowId);
+    } finally {
+      await statement.finalizeAsync();
+    }
   }
 
-  // Obtener todas las tareas
+  // Get all tasks
   static async getTasks() {
-    await Tareas.initDB();
-    return await new Promise((resolve, reject) => {
-      Tareas.db.transaction(tx => {
-        tx.executeSql(
-          'SELECT * FROM tasks',
-          [],
-          (_, { rows }) => resolve(rows._array),
-          (_, error) => reject(error)
-        );
-      });
-    });
+    await Task.initDB();
+    const statement = await Task.db.prepareAsync('SELECT * FROM tasks');
+    try {
+      const result = await statement.executeAsync();
+      const allRows = await result.getAllAsync();
+      return allRows;
+    } finally {
+      await statement.finalizeAsync();
+    }
   }
 
-  // Actualizar una tarea existente
+  // Update an existing task
   static async updateTask(id, title, description, status, time) {
-    await Tareas.initDB();
-    await new Promise((resolve, reject) => {
-      Tareas.db.transaction(tx => {
-        tx.executeSql(
-          'UPDATE tasks SET title = ?, description = ?, status = ?, time = ? WHERE id = ?',
-          [title, description, status, time, id],
-          () => resolve(),
-          (_, error) => reject(error)
-        );
+    await Task.initDB();
+    const statement = await Task.db.prepareAsync(
+      'UPDATE tasks SET title = $title, description = $description, status = $status, time = $time WHERE id = $id'
+    );
+    try {
+      const result = await statement.executeAsync({
+        $title: title,
+        $description: description,
+        $status: status,
+        $time: time,
+        $id: id,
       });
-    });
+      console.log('Rows updated:', result.changes);
+    } finally {
+      await statement.finalizeAsync();
+    }
   }
 
-  // Eliminar una tarea
+  // Delete a task
   static async deleteTask(id) {
-    await Tareas.initDB();
-    await new Promise((resolve, reject) => {
-      Tareas.db.transaction(tx => {
-        tx.executeSql(
-          'DELETE FROM tasks WHERE id = ?',
-          [id],
-          () => resolve(),
-          (_, error) => reject(error)
-        );
-      });
-    });
+    await Task.initDB();
+    const statement = await Task.db.prepareAsync('DELETE FROM tasks WHERE id = $id');
+    try {
+      const result = await statement.executeAsync({ $id: id });
+      console.log('Rows deleted:', result.changes);
+    } finally {
+      await statement.finalizeAsync();
+    }
   }
 
+  // Create sample test tasks
   static async createTestTasks() {
     const testTasks = [
-      { title: 'Reunión de proyecto', description: 'Reunión con el equipo para discutir avances del proyecto.', status: 'pendiente', time: '10:00:00' },
-      { title: 'Estudiar para el examen', description: 'Estudiar para el examen de matemáticas.', status: 'en progreso', time: '15:00:00' },
-      { title: 'Comprar víveres', description: 'Ir al supermercado para comprar víveres.', status: 'pendiente', time: '18:30:00' },
-      { title: 'Entrenamiento en el gimnasio', description: 'Entrenar piernas en el gimnasio.', status: 'completada', time: '20:00:00' },
+      { title: 'Project Meeting', description: 'Team meeting to discuss project updates.', status: 'pending', time: '10:00:00' },
+      { title: 'Study for Exam', description: 'Study for the mathematics exam.', status: 'in progress', time: '15:00:00' },
+      { title: 'Grocery Shopping', description: 'Go to the supermarket to buy groceries.', status: 'pending', time: '18:30:00' },
+      { title: 'Gym Workout', description: 'Leg day workout at the gym.', status: 'completed', time: '20:00:00' },
     ];
 
     for (const task of testTasks) {
-      await Tareas.createTask(task.title, task.description, task.status, task.time);
+      await Task.createTask(task.title, task.description, task.status, task.time);
     }
   }
 }
 
-export default Tareas;
+export default Task;
