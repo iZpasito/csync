@@ -20,8 +20,6 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.taskDescription}>{task.description}</Text>
         </View>
       ))}
-
-      <Button title="Agregar Tarea" onPress={() => navigation.navigate('Tasks')} />
     </ScrollView>
   );
 };

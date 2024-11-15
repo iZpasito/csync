@@ -15,36 +15,54 @@ const TasksScreen = () => {
     loadTasks();
   }, []);
 
-  const loadTasks = () => {
-    TaskController.fetchTasks(setTasks);
+  const loadTasks = async () => {
+    try {
+      const fetchedTasks = await TaskController.fetchTasks();
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+    }
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (title && description) {
       const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false }); // Formato 'HH:MM:SS'
-      TaskController.addTask(title, description, status, formattedTime, () => {
+      try {
+        await TaskController.addTask(title, description, status, formattedTime);
         setTitle('');           
         setDescription('');     
         setTime(new Date());    
         loadTasks();            
-      });
+      } catch (error) {
+        console.error('Error adding task:', error);
+      }
     } else {
       Alert.alert("Por favor completa todos los campos");
     }
   };
   
 
-  const deleteTask = (id) => {
-    TaskController.removeTask(id, loadTasks);
+  const deleteTask = async (id) => {
+    try {
+      await TaskController.removeTask(id);
+      loadTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
-  const editTask = (id) => {
+  const editTask = async (id) => {
     const updatedTitle = prompt("Nuevo título:");
     const updatedDescription = prompt("Nueva descripción:");
     const updatedStatus = prompt("Nuevo estado:");
     const updatedTime = prompt("Nueva hora:");
     if (updatedTitle && updatedDescription && updatedStatus && updatedTime) {
-      TaskController.modifyTask(id, updatedTitle, updatedDescription, updatedStatus, updatedTime, loadTasks);
+      try {
+        await TaskController.modifyTask(id, updatedTitle, updatedDescription, updatedStatus, updatedTime);
+        loadTasks();
+      } catch (error) {
+        console.error('Error editing task:', error);
+      }
     }
   };
 

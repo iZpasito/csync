@@ -1,36 +1,36 @@
 import Tareas from '../Models/ModelTask';
 
 class TaskController {
-  static addTask(title, description, status, time, callback) {
-    Tareas.createTask(title, description, status, time, callback);
+  static async addTask(title, description, status, time) {
+    try {
+      await Tareas.createTask(title, description, status, time);
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   }
 
-  static fetchTasks(callback) {
-    Tareas.getTasks(callback);
+  static async fetchTasks() {
+    try {
+      return await Tareas.getTasks();
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
   }
 
-  static modifyTask(id, title, description, status, time, callback) {
-    Tareas.updateTask(id, title, description, status, time, callback);
+  static async modifyTask(id, title, description, status, time) {
+    try {
+      await Tareas.updateTask(id, title, description, status, time);
+    } catch (error) {
+      console.error('Error modifying task:', error);
+    }
   }
 
-  static removeTask(id, callback) {
-    Tareas.deleteTask(id, callback);
-  }
-
-  static addUser(username, email, password, isPremium, callback) {
-    Tareas.createUser(username, email, password, isPremium, callback);
-  }
-
-  static fetchUsers(callback) {
-    Tareas.getUsers(callback);
-  }
-
-  static modifyUser(id, username, email, password, isPremium, callback) {
-    Tareas.updateUser(id, username, email, password, isPremium, callback);
-  }
-
-  static removeUser(id, callback) {
-    Tareas.deleteUser(id, callback);
+  static async removeTask(id) {
+    try {
+      await Tareas.deleteTask(id);
+    } catch (error) {
+      console.error('Error removing task:', error);
+    }
   }
 }
 
