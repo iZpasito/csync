@@ -1,33 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, Button, Image, Alert } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+import { PlaceContext } from '../controller/taskController';
 
 const CalendarScreen = () => {
+  const { setSelectedDate } = useContext(PlaceContext);
   const [items, setItems] = useState({});
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const navigation = useNavigation();
 
   const handleAddPhoto = async (day) => {
-    Alert.alert(
-      'Agregar Foto',
-      'Elige cómo quieres agregar la foto',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Tomar Foto',
-          onPress: () => handleTakePhoto(day),
-        },
-        {
-          text: 'Adjuntar Foto',
-          onPress: () => handlePickImage(day),
-        },
-      ]
-    );
+    setSelectedDay(day);
+    setShowTimePicker(true);
   };
 
-  const handleTakePhoto = async (day) => {
+  const handleTimeChange = (event, time) => {
+    setShowTimePicker(false);
+    if (time) {
+      setSelectedTime(time);
+      Alert.alert(
+        'Agregar Foto',
+        'Elige cómo quieres agregar la foto',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Tomar Foto',
+            onPress: () => handleTakePhoto(selectedDay, time),
+          },
+          {
+            text: 'Adjuntar Foto',
+            onPress: () => handlePickImage(selectedDay, time),
+          },
+          {
+            text: 'Agregar Tarea',
+            onPress: () => {
+              setSelectedDate(selectedDay.dateString);
+              navigation.navigate('Tasks');
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleTakePhoto = async (day, time) => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permisos Insuficientes', 'Necesitas otorgar permisos de cámara para tomar fotos.', [{ text: 'OK' }]);
@@ -41,11 +65,11 @@ const CalendarScreen = () => {
     });
 
     if (!result.cancelled) {
-      addEventWithPhoto(day, result.uri);
+      addEventWithPhoto(day, time, result.assets[0].uri);
     }
   };
 
-  const handlePickImage = async (day) => {
+  const handlePickImage = async (day, time) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permisos Insuficientes', 'Necesitas otorgar permisos de acceso a la galería para adjuntar fotos.', [{ text: 'OK' }]);
@@ -58,22 +82,24 @@ const CalendarScreen = () => {
       quality: 1,
     });
 
-    if (!result.cancelled) {
-      addEventWithPhoto(day, result.uri);
+    if (!result.canceled) {
+      addEventWithPhoto(day, time, result.assets[0].uri);
     }
   };
 
-  const addEventWithPhoto = (day, uri) => {
+  const addEventWithPhoto = (day, time, uri) => {
     const selectedDate = day.dateString;
+    const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false });
     setItems((prevItems) => {
       const newItems = { ...prevItems };
       if (!newItems[selectedDate]) {
         newItems[selectedDate] = [];
       }
       newItems[selectedDate].push({
-        name: 'Evento con foto',
+        name: `Evento con foto a las ${formattedTime}`,
         height: 150,
         imageUri: uri,
+        time: formattedTime,
       });
       return newItems;
     });
@@ -94,10 +120,27 @@ const CalendarScreen = () => {
     <View style={styles.container}>
       <Agenda
         items={items}
+        loadItemsForMonth={(month) => {
+          console.log('Cargando items para', month);
+        }}
         onDayPress={(day) => handleAddPhoto(day)}
         selected={new Date().toISOString().split('T')[0]}
         renderItem={renderItem}
+        theme={{
+          agendaDayTextColor: 'blue',
+          agendaDayNumColor: 'green',
+          agendaTodayColor: 'red',
+          agendaKnobColor: 'blue',
+        }}
       />
+      {showTimePicker && (
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          display="default"
+          onChange={handleTimeChange}
+        />
+      )}
     </View>
   );
 };

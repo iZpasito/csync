@@ -1,37 +1,151 @@
-import Tareas from '../Models/ModelTask';
+import React, { createContext, useState, useLayoutEffect } from 'react';
+import { Alert } from 'react-native';
 
-class TaskController {
-  static async addTask(title, description, status, time) {
+
+
+export const PlaceContext = createContext({
+  imageUri: '',
+  title: '',
+  tasks: [],
+  selectedDate: '',
+  ModificarImagen: (image) => {},
+  modifyTitle: (title) => {},
+  createTask: (title, description, imageUri, status, time, date) => {},
+  getTask: () => {},
+  modifyTask: (id, title, description, imageUri, status, time, date) => {},
+  deleteTask: (id) => {},
+  setSelectedDate: (date) => {},
+});
+
+function PlaceContextProvider({ children }) {
+  const [imageUri, setImageUri] = useState('');
+  const [title, setTitle] = useState('');
+  const [tasks, setTasks] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+
+  useLayoutEffect(() => {
+    loadTasks();
+  }, []);
+
+  async function loadTasks() {
     try {
-      await Tareas.createTask(title, description, status, time);
+      const result = await db.execAsync(
+        [
+          {
+            sql: 'SELECT * FROM tasks;',
+            args: []
+          }
+        ],
+        false
+      );
+      setTasks(result[0].rows);
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error('Error loading tasks:', error);
     }
   }
 
-  static async fetchTasks() {
-    try {
-      return await Tareas.getTasks();
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
+  function ModificarImagen(image) {
+    if (image) {
+      setImageUri(image);
+    } else {
+      console.error('Error: image is undefined');
     }
   }
 
-  static async modifyTask(id, title, description, status, time) {
+  function modifyTitle(title) {
+    setTitle(title);
+  }
+
+  async function createTask(title, description, imageUri, status, time, date) {
     try {
-      await Tareas.updateTask(id, title, description, status, time);
+      await db.execAsync(
+        [
+          {
+            sql: 'INSERT INTO tasks (title, description, imageUri, status, time, date) VALUES (?, ?, ?, ?, ?, ?)',
+            args: [title, description, imageUri, status, time, date]
+          }
+        ],
+        false
+      );
+      Alert.alert('Success', 'Tarea Creada!');
+      loadTasks();
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  }
+
+  async function getTask(id) {
+    try {
+      const result = await db.execAsync(
+        [
+          {
+            sql: 'SELECT * FROM tasks WHERE id = ?;',
+            args: [id]
+          }
+        ],
+        false
+      );
+      return result[0].rows[0];
+    } catch (error) {
+      console.error('Error getting task:', error);
+    }
+  }
+
+  async function modifyTask(id, title, description, imageUri, status, time, date) {
+    try {
+      await db.execAsync(
+        [
+          {
+            sql: 'UPDATE tasks SET title = ?, description = ?, imageUri = ?, status = ?, time = ?, date = ? WHERE id = ?;',
+            args: [title, description, imageUri, status, time, date, id]
+          }
+        ],
+        false
+      );
+      Alert.alert('Success', 'Task updated successfully!');
+      loadTasks();
     } catch (error) {
       console.error('Error modifying task:', error);
     }
   }
 
-  static async removeTask(id) {
+  async function deleteTask(id) {
     try {
-      await Tareas.deleteTask(id);
+      await db.execAsync(
+        [
+          {
+            sql: 'DELETE FROM tasks WHERE id = ?;',
+            args: [id]
+          }
+        ],
+        false
+      );
+      Alert.alert('Success', 'Task deleted successfully!');
+      loadTasks();
     } catch (error) {
-      console.error('Error removing task:', error);
+      console.error('Error deleting task:', error);
     }
   }
+
+  const value = {
+    imageUri,
+    title,
+    tasks,
+    selectedDate,
+    ModificarImagen,
+    modifyTitle,
+    createTask,
+    getTask,
+    modifyTask,
+    deleteTask,
+    setSelectedDate,
+  };
+
+  return (
+    <PlaceContext.Provider value={value}>
+      {children}
+    </PlaceContext.Provider>
+  );
 }
 
-export default TaskController;
+export default PlaceContextProvider;

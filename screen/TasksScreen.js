@@ -1,23 +1,26 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import TaskController from '../controller/taskController';
+import { PlaceContext } from '../controller/taskController';
+import { useContext, useLayoutEffect } from 'react';
+
 
 const TasksScreen = () => {
+  const TareasCTX = useContext(PlaceContext);
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('pendiente');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { selectedDate } = TareasCTX;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     loadTasks();
   }, []);
 
   const loadTasks = async () => {
     try {
-      const fetchedTasks = await TaskController.fetchTasks();
+      const fetchedTasks = await TareasCTX.getTask();
       setTasks(fetchedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
@@ -28,11 +31,11 @@ const TasksScreen = () => {
     if (title && description) {
       const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false }); // Formato 'HH:MM:SS'
       try {
-        await TaskController.addTask(title, description, status, formattedTime);
-        setTitle('');           
-        setDescription('');     
-        setTime(new Date());    
-        loadTasks();            
+        await TareasCTX.createTask(title, description, '', status, formattedTime, selectedDate);
+        setTitle('');
+        setDescription('');
+        setTime(new Date());
+        loadTasks();
       } catch (error) {
         console.error('Error adding task:', error);
       }
@@ -40,11 +43,10 @@ const TasksScreen = () => {
       Alert.alert("Por favor completa todos los campos");
     }
   };
-  
 
   const deleteTask = async (id) => {
     try {
-      await TaskController.removeTask(id);
+      await TareasCTX.deleteTask(id);
       loadTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
@@ -58,7 +60,7 @@ const TasksScreen = () => {
     const updatedTime = prompt("Nueva hora:");
     if (updatedTitle && updatedDescription && updatedStatus && updatedTime) {
       try {
-        await TaskController.modifyTask(id, updatedTitle, updatedDescription, updatedStatus, updatedTime);
+        await TareasCTX.modifyTask(id, updatedTitle, updatedDescription, '', updatedStatus, updatedTime);
         loadTasks();
       } catch (error) {
         console.error('Error editing task:', error);
@@ -97,8 +99,6 @@ const TasksScreen = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderTask}
       />
-
-      <Text style={styles.title}>Agregar Tarea</Text>
       <TextInput
         style={styles.input}
         placeholder="Título"
@@ -111,18 +111,17 @@ const TasksScreen = () => {
         value={description}
         onChangeText={setDescription}
       />
+      <Button title="Agregar Tarea" onPress={addTask} />
       <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
       {showTimePicker && (
         <DateTimePicker
           value={time}
           mode="time"
-          is24Hour={true}
           display="default"
           onChange={onTimeChange}
         />
       )}
       <Text>Hora seleccionada: {time.toTimeString().split(' ')[0]}</Text>
-      <Button title="Agregar Tarea" onPress={addTask} />
     </View>
   );
 };

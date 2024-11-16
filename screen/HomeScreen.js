@@ -1,13 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
-import Tareas from '../Models/ModelTask';
+import React, { useLayoutEffect, useState, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { PlaceContext } from '../controller/taskController';
 
 const HomeScreen = ({ navigation }) => {
-  const [tasks, setTasks] = useState([]);
+  const { tasks, loadTasks } = useContext(PlaceContext);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    Tareas.getTasks(setTasks);
+  useLayoutEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        await loadTasks();
+      } catch (error) {
+        console.error("Error al obtener las tareas:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTasks();
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#f8f9fa" />
+      </View>
+    );
+  }
+
+  if (!tasks || tasks.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.noTasksText}>No hay tareas disponibles.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -28,7 +55,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#343a40', // Fondo oscuro
+    backgroundColor: '#495057', // Fondo oscuro
   },
   title: {
     fontSize: 26,
@@ -62,6 +89,17 @@ const styles = StyleSheet.create({
   taskDescription: {
     fontSize: 14,
     color: '#adb5bd',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#495057', // Fondo oscuro
+  },
+  noTasksText: {
+    fontSize: 18,
+    color: '#f8f9fa',
+    textAlign: 'center',
   },
 });
 

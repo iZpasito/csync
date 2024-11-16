@@ -1,18 +1,21 @@
-import * as SQLite from 'expo-sqlite';
 
-async function setupDatabase() {
-  // Abre o crea la base de datos de forma asincrónica
-  const db = await SQLite.openDatabaseAsync('CsyncDB.db');
-
-  // Crea las tablas si no existen usando execAsync
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS tasks (
+export async function CsyncDB(db) {
+  const DATABASE_VERSION = 1;
+  let { user_version: currentDbVersion } = await db.getFirstAsync('PRAGMA user_version');
+  if (currentDbVersion >= DATABASE_VERSION) {
+    return;
+  }
+  if (currentDbVersion === 0) {
+    await db.execAsync(`
+      PRAGMA journal_mode = 'wal';
+      CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       description TEXT,
+      imageUri TEXT NOT NULL,
       status TEXT,
       time TEXT,
-      created_at TEXT
+      date TEXT DEFAULT
     );
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +23,7 @@ async function setupDatabase() {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       is_premium INTEGER DEFAULT 2,  -- Referencia a premium_status
-      created_at TEXT
+      fecha_creacion TEXT
     );
     CREATE TABLE IF NOT EXISTS premium_status (
       id INTEGER PRIMARY KEY,
@@ -30,12 +33,11 @@ async function setupDatabase() {
       (1, 'Es premium'),
       (2, 'No es premium'),
       (3, 'Prueba');
-  `);
+`);
+   
+    currentDbVersion = 2;
+  }
 
-  console.log("Tablas creadas o ya existen.");
+  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-// Llama a la función para configurar la base de datos
-setupDatabase().catch(error => {
-  console.error("Error al configurar la base de datos:", error);
-});

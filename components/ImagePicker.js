@@ -31,8 +31,8 @@ const ImagePickerComponent = () => {
         quality: 0.5,
       });
 
-      if (!image.cancelled) {
-        setPickedImage(image.uri);
+      if (!image.canceled) {
+        setPickedImage(image.assets[0].uri);
       }
     } catch (error) {
       Alert.alert('Error', 'Hubo un problema al tomar la foto. Por favor intenta nuevamente.');
