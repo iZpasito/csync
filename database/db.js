@@ -4,8 +4,8 @@ import * as SQLite from 'expo-sqlite';
 
 export async function CsyncDB() {
   const db = SQLite.openDatabaseAsync('tasks.db');
-  await db.execAsync('PRAGMA journal_mode = WAL');
-  await db.execAsync (`
+  (await db).execAsync('PRAGMA journal_mode = WAL');
+  (await db).execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -31,6 +31,6 @@ export async function CsyncDB() {
       (1, 'Es premium'),
       (2, 'No es premium'),
       (3, 'Prueba');`);
-  console.log("Tablas creadas o ya existen.");
+
 }
 

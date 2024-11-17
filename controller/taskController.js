@@ -28,6 +28,7 @@ function PlaceContextProvider({ children }) {
   const setupDatabase = async () => {
     try {
       await CsyncDB();
+      console.log("Tablas creadas o ya existen.");
     } catch (error) {
       console.error("Error al configurar la base de datos:", error);
     }
@@ -35,7 +36,7 @@ function PlaceContextProvider({ children }) {
 
   const loadTasks = async () => {
     try {
-      const result = await db.execAsync(
+      const result = (await db).execAsync(
         "SELECT * FROM tasks",
         []
       );
@@ -48,7 +49,7 @@ function PlaceContextProvider({ children }) {
 
   const addTask = async (task) => {
     try {
-      const result = await db.execAsync(
+      const result = (await db).execAsync(
         "INSERT INTO tasks (title, description, status, time, created_at) VALUES (?, ?, ?, ?, ?)",
         [task.title, task.description, task.status, task.time, task.created_at]
       );
@@ -63,7 +64,7 @@ function PlaceContextProvider({ children }) {
 
   const updateTask = async (id, updatedTask) => {
     try {
-      await db.execAsync(
+      (await db).execAsync (
         "UPDATE tasks SET title = ?, description = ?, status = ?, time = ?, created_at = ? WHERE id = ?",
         [updatedTask.title, updatedTask.description, updatedTask.status, updatedTask.time, updatedTask.created_at, id]
       );
@@ -79,7 +80,7 @@ function PlaceContextProvider({ children }) {
 
   const deleteTask = async (id) => {
     try {
-      await db.execAsync(
+      (await db).execAsync(
         "DELETE FROM tasks WHERE id = ?",
         [id]
       );
@@ -91,7 +92,7 @@ function PlaceContextProvider({ children }) {
 
   const loadUsers = async () => {
     try {
-      const result = await db.execAsync(
+      const result = (await db).execAsync(
         "SELECT * FROM users",
         []
       );
@@ -103,7 +104,7 @@ function PlaceContextProvider({ children }) {
 
   const addUser = async (user) => {
     try {
-      const result = await db.runAsync(
+      const result = (await db).runAsync(
         "INSERT INTO users (username, email, password, is_premium, created_at) VALUES (?, ?, ?, ?, ?)",
         [user.username, user.email, user.password, user.is_premium, user.created_at]
       );
