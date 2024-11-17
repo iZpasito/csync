@@ -1,65 +1,55 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PlaceContext } from '../controller/taskController';
+import ImagePickerComponent from '../components/ImagePicker';
+
 
 const TasksScreen = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [imageUri, setImageUri] = useState(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const { addTask, tasks } = useContext(PlaceContext);
-  
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
   const handleAddTask = async () => {
     if (title && description) {
       const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false });
       const newTask = {
-        title:'prueba',
-        description:'prueba',
-        status:'pendiente',
+        title: title,
+        description: description,
+        status: 'pendiente',
         time: formattedTime,
         date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
-        imageUri: imageUri,
+        imageUri: imageUri, // Incluir la URI de la imagen
       };
       try {
-        addTask(newTask);   
+        addTask(newTask);
+        setTitle(''); // Limpiar campos después de agregar la tarea
+        setDescription('');
+        setImageUri(null);
       } catch (error) {
         console.error('Error adding task:', error);
       }
     } else {
-      Alert.alert("Por favor completa todos los campos");
-    }
-  };
- 
-  const handleEditTask = async (task) => {
-    const updatedTitle = prompt("Nuevo título:", task.title);
-    const updatedDescription = prompt("Nueva descripción:", task.description);
-    const updatedStatus = prompt("Nuevo estado:", task.status);
-    const updatedTime = prompt("Nueva hora:", task.time);
-    if (updatedTitle && updatedDescription && updatedStatus && updatedTime) {
-      const updatedTask = {
-        title: updatedTitle,
-        description: updatedDescription,
-        status: updatedStatus,
-        time: updatedTime,
-        created_at: new Date().toISOString(),
-        imageUri: imageUri,
-      };
-      console.log(updatedTask);
+      Alert.alert('Por favor completa todos los campos');
     }
   };
 
-  const handleDeleteTask = async (id) => {
-    try {
-      console.log(id, 'se borro');
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setShowTimePicker(false);
+    setTime(currentTime);
+  };
+
+  const handleImageSelected = (uri) => {
+    setImageUri(uri);
+    setShowImagePicker(false); // Ocultar el modal de ImagePicker después de seleccionar una imagen
   };
 
   const renderTask = ({ item }) => (
@@ -68,6 +58,11 @@ const TasksScreen = () => {
       <Text>{item.description}</Text>
       <Text>{item.status}</Text>
       <Text>Hora: {item.time}</Text>
+      {item.imageUri && (
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: item.imageUri }} style={styles.image} />
+        </View>
+      )}
       <View style={styles.actions}>
         <TouchableOpacity onPress={() => handleEditTask(item)}>
           <Text style={styles.edit}>Editar</Text>
@@ -78,12 +73,6 @@ const TasksScreen = () => {
       </View>
     </View>
   );
-
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(false);
-    setTime(currentTime);
-  };
 
   return (
     <View style={styles.container}>
@@ -118,6 +107,23 @@ const TasksScreen = () => {
         />
       )}
       <Text>Hora seleccionada: {time.toTimeString().split(' ')[0]}</Text>
+
+      {/* Botón para abrir el ImagePicker */}
+      <Button title="Adjuntar Imagen" onPress={() => setShowImagePicker(true)} />
+
+      {/* Modal para mostrar el ImagePickerComponent */}
+      <Modal visible={showImagePicker} animationType="slide">
+        <ImagePickerComponent onImageSelected={handleImageSelected} />
+        <Button title="Cancelar" onPress={() => setShowImagePicker(false)} />
+      </Modal>
+
+      {imageUri && (
+        <View style={styles.imagePreview}>
+          <Text>Imagen seleccionada:</Text>
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        </View>
+      )}
+
       <Button title="Agregar Tarea" onPress={handleAddTask} />
     </View>
   );
@@ -155,6 +161,18 @@ const styles = StyleSheet.create({
   },
   delete: {
     color: 'red',
+  },
+  imagePreview: {
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  imageContainer: {
+    marginTop: 10,
   },
 });
 

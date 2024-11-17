@@ -43,11 +43,12 @@ async function insertarDatos(){
   const addTask = async (task) => {
     try {
       const defaultTask = {
-        title: "Nueva Tarea",
-        description: "Descripción de la tarea",
-        Status: "pendiente",
-        time: "12:00",
+        title: task.title,
+        description: task.description,
+        Status: task.Status,
+        time: task.time,
         created_at: new Date().toISOString(),
+        imageUri: task.imageUri,
       };
       const taskToInsert = {
         title: task?.title || defaultTask.title,

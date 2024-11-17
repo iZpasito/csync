@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Button, Image, Alert, Text, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-const ImagePickerComponent = () => {
+const ImagePickerComponent = ({ onImageSelected }) => {
   const [pickedImage, setPickedImage] = useState(null);
 
   const verifyPermissions = async () => {
@@ -30,29 +30,43 @@ const ImagePickerComponent = () => {
         aspect: [16, 9],
         quality: 0.5,
       });
+      console.log("si entro CAMARAAA")
 
-      if (!image.cancelled) {
+      if (!image.canceled ) {
         setPickedImage(image.uri);
+        onImageSelected(image.uri);
       }
     } catch (error) {
       Alert.alert('Error', 'Hubo un problema al tomar la foto. Por favor intenta nuevamente.');
     }
   };
 
+  const pickImageHandler = async () => {
+    try {
+      const image = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.5,
+      });
+      console.log("si entro pickeimage")
+      if (!image.canceled) {
+        setPickedImage(image.assets[0].uri);
+        onImageSelected(image.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema al seleccionar la foto. Por favor intenta nuevamente.');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.imagePreview}>
-        {pickedImage ? (
-          <Image
-            style={styles.image}
-            source={{ uri: pickedImage }}
-            onError={() => Alert.alert('Error', 'No se pudo cargar la imagen.')}
-          />
-        ) : (
-          <Text style={styles.noImageText}>No se ha seleccionado ninguna imagen</Text>
-        )}
-      </View>
-      <Button title="Tomar Imagen" onPress={takeImageHandler} />
+      <Button title="Tomar Foto" onPress={takeImageHandler} />
+      <Button title="Elegir desde la Galería" onPress={pickImageHandler} />
+      {pickedImage && (
+        <View style={styles.imagePreview}>
+          <Image style={styles.image} source={{ uri: pickedImage }} />
+        </View>
+      )}
     </View>
   );
 };
@@ -75,10 +89,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-  },
-  noImageText: {
-    textAlign: 'center',
-    color: 'gray',
   },
 });
 

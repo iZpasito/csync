@@ -12,8 +12,6 @@ const CalendarScreen = () => {
   const [items, setItems] = useState({});
   const { addTask, tasks } = useContext(PlaceContext);
 
-  console.log('Tareaaas',tasks)
-
   useEffect(() => {
     const calendarItems = {};
     tasks.forEach((task) => {

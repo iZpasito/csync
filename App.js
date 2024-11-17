@@ -10,17 +10,19 @@ import CalendarScreen from './screen/CalendarScreen';
 import ProfileScreen from './screen/ProfileScreen';
 import TasksScreen from './screen/TasksScreen';
 
+// Crear el Tab Navigator
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <PlaceContextProvider>
-      <NavigationContainer>
+    <PlaceContextProvider> 
+      <NavigationContainer> 
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
 
+              // Asignar iconos según el nombre de la pantalla
               if (route.name === 'Inicio') {
                 iconName = focused ? 'home' : 'home';
               } else if (route.name === 'Tareas') {
@@ -31,15 +33,17 @@ export default function App() {
                 iconName = focused ? 'user' : 'user';
               }
 
+              // Devolver el icono de FontAwesome
               return <Icon name={iconName} size={size} color={color} />;
             },
             tabBarActiveTintColor: 'blue',
             tabBarInactiveTintColor: 'gray',
           })}
         >
+          {/* Definir las pantallas del Tab Navigator */}
           <Tab.Screen name="Inicio" component={HomeScreen} />
           <Tab.Screen name="Tareas" component={TasksScreen} />
-          <Tab.Screen name="Calendario"component={CalendarScreen} />
+          <Tab.Screen name="Calendario" component={CalendarScreen} />
           <Tab.Screen name="Perfil" component={ProfileScreen} />
         </Tab.Navigator>
       </NavigationContainer>

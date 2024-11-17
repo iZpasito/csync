@@ -5,7 +5,6 @@ import { View, Text, StyleSheet } from 'react-native';
 
 const TaskList = () => {
   const { tasks } = useContext(PlaceContext);
-
   return (
     <View>
     {tasks.length === 0 ? (

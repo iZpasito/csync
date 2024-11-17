@@ -1,48 +1,15 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, FlatList } from 'react-native';
 import { PlaceContext } from '../controller/taskController';
-import * as SQLite from 'expo-sqlite';
-import TaskList from '../components/tareas';
-
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const {tasks, addTask} = useContext(PlaceContext);
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    status: "pendiente",
-    time: "",
-    created_at: new Date().toISOString(),
-  });
 
-
-/*   const addTask = async (task) => {
-    try {
-      const db = await SQLite.openDatabaseAsync('Csync');
-      const tareas = await db.runAsync(`INSERT INTO tasks (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)`
-        ,task.title, task.description, task.Status, task.time, task.created_at);
-        setNewTask(tareas);
-        console.log('Tarea Agregada con exito!');
-    } catch (error) {
-      console.error("Failed to add task:", error);
-    }
-  }; */
-
- /*  const loadTasks = async () => {
-      const db = await SQLite.openDatabaseAsync('Csync');
-      const tareas = await db.getAllAsync (`SELECT * FROM tasks`);
-      setTasks(tareas);
-  }; */
 
   const handleAddTask = () => {
-    const newTask = {
-      title: "Nueva Tarea1",
-      description: "Descripción de la tarea1",
-      Status: "pendiente1",
-      time: "12:001",
-      created_at: new Date().toISOString(),
-    };
-    addTask(newTask);
+    navigation.navigate('Tareas');
   };
 
   return (
@@ -107,6 +74,32 @@ const styles = StyleSheet.create({
   taskDescription: {
     fontSize: 14,
     color: '#adb5bd',
+  },
+  taskContainer: {
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  taskTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  taskDescription: {
+    fontSize: 14,
+    marginTop: 5,
+  },
+  taskStatus: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
+  },
+  taskTime: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 5,
   },
 });
 
