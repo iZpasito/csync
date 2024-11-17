@@ -1,69 +1,112 @@
 import React, { createContext, useState, useEffect } from "react";
-import { CsyncDB, insertarDatos } from "../database/db";
-import * as SQLite from 'expo-sqlite';
-
-// Crear una instancia de la base de datos que se usará en todas las funciones
-const db = SQLite.openDatabaseAsync('tasks.db');
+import * as SQLite from "expo-sqlite";
 
 export const PlaceContext = createContext({
   tasks: [],
-  users: [],
   addTask: (task) => {},
-  updateTask: (id, updatedTask) => {},
-  deleteTask: (id) => {},
-  loadTasks: () => {},
-  addUser: (user) => {},
-  loadUsers: () => {},
+  loadTasks: (task) => {} 
 });
 
 function PlaceContextProvider({ children }) {
-  const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [tareas, setTasks] = useState([]);
 
-  useEffect(() => {
-    setupDatabase();
-    loadTasks();
-  }, []);
-
-  const setupDatabase = async () => {
-    try {
-      await CsyncDB(); // Configura la base de datos y crea las tablas si no existen
-      await insertarDatos(); // Inserta datos iniciales
-      console.log("Tablas creadas o ya existen.");
-    } catch (error) {
-      console.error("Error al configurar la base de datos:", error);
-    }
-  };
-
+ 
+  async function CsyncDB() {
+    const db = await SQLite.openDatabaseAsync('Csync');
+    await db.execAsync('PRAGMA journal_mode = WAL');
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS TASKS (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        Status TEXT,
+        time TEXT,
+        created_at TEXT);
+      CREATE TABLE IF NOT EXISTS premium_status (
+        id INTEGER PRIMARY KEY,
+        description TEXT NOT NULL
+      );`);
+}
+async function insertarDatos(){
+  const db = await SQLite.openDatabaseAsync('Csync');
+  await db.runAsync(`INSERT OR IGNORE INTO premium_status (id, description) VALUES
+  (1, 'Es premium'),
+  (2, 'No es premium'),
+  (3, 'Prueba');`)
+}
   const loadTasks = async () => {
-    try {
-      const result = await db.execAsync(
-        "SELECT * FROM tasks",
-        []
-      );
-      setTasks(result.rows._array);
-    } catch (error) {
-      console.error("Failed to load tasks:", error);
-    }
+      const db = await SQLite.openDatabaseAsync('Csync');
+      const result = await db.getAllAsync(`SELECT * FROM TASKS`);
+      setTasks(result);
   };
 
   const addTask = async (task) => {
     try {
-      const result = await db.runAsync(
-        "INSERT INTO tasks (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)"
-        ,task.title, task.description, task.Status, task.time, task.created_at);
-/*       setTasks((prevTasks) => [
-        ...prevTasks,
-        { id: result.insertId, ...task },
-      ]); */
+      const defaultTask = {
+        title: "Nueva Tarea",
+        description: "Descripción de la tarea",
+        Status: "pendiente",
+        time: "12:00",
+        created_at: new Date().toISOString(),
+      };
+      const taskToInsert = {
+        title: task?.title || defaultTask.title,
+        description: task?.description || defaultTask.description,
+        Status: task?.status || defaultTask.Status,
+        time: task?.time || defaultTask.time,
+        created_at: task?.created_at || defaultTask.created_at,
+      };
+  
+      const db = await SQLite.openDatabaseAsync('Csync'); 
+      const result = db.runAsync(
+        `INSERT OR IGNORE INTO TASKS (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)`,
+        taskToInsert.title,
+        taskToInsert.description,
+        taskToInsert.Status,
+        taskToInsert.time,
+        taskToInsert.created_at);
+      setTasks(result);
     } catch (error) {
       console.error("Failed to add task:", error);
     }
   };
+  useEffect(() => {
+    CsyncDB();
+    insertarDatos();
+    loadTasks();
+  }, []);
+  
+/*   const updateTask = async (id, updatedTask) => {
+    try {
+      (await db).execAsync (
+        "UPDATE tasks SET title = ?, description = ?, status = ?, time = ?, created_at = ? WHERE id = ?",
+        [updatedTask.title, updatedTask.description, updatedTask.status, updatedTask.time, updatedTask.created_at, id]
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === id ? { id, ...updatedTask } : task
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update task:", error);
+    }
+  }; */
+
+ /*  const deleteTask = async (id) => {
+    try {
+      (await db).execAsync(
+        "DELETE FROM tasks WHERE id = ?",
+        [id]
+      );
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
+  }; */
 
   /* const loadUsers = async () => {
     try {
-      const result = await db.execAsync(
+      const result = (await db).execAsync(
         "SELECT * FROM users",
         []
       );
@@ -73,9 +116,9 @@ function PlaceContextProvider({ children }) {
     }
   }; */
 
-/*   const addUser = async (user) => {
+ /*  const addUser = async (user) => {
     try {
-      const result = await db.runAsync(
+      const result = (await db).runAsync(
         "INSERT INTO users (username, email, password, is_premium, created_at) VALUES (?, ?, ?, ?, ?)",
         [user.username, user.email, user.password, user.is_premium, user.created_at]
       );
@@ -89,11 +132,8 @@ function PlaceContextProvider({ children }) {
   }; */
 
   const value = {
-    tasks,
+    tasks: tareas,
     addTask,
-    updateTask: () => {}, // Puedes añadir la lógica para actualizar tareas
-    deleteTask: () => {}, // Puedes añadir la lógica para eliminar tareas
-    loadTasks,
   };
 
   return (

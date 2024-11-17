@@ -3,14 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PlaceContext } from '../controller/taskController';
 
-import * as SQLite from "expo-sqlite";
-
-
 const TasksScreen = () => {
-  const { tasks, addTask, updateTask, deleteTask, loadTasks } = useContext(PlaceContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('pendiente');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -22,18 +17,15 @@ const TasksScreen = () => {
     if (title && description) {
       const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false });
       const newTask = {
-        title,
-        description,
-        status,
+        title:'prueba',
+        description:'prueba',
+        status:'pendiente',
         time: formattedTime,
         date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
       };
       try {
-        addTask(newTask);
-        setTitle('');           
-        setDescription('');     
-        setTime(new Date());    
+        addTask(newTask);   
       } catch (error) {
         console.error('Error adding task:', error);
       }
@@ -41,7 +33,7 @@ const TasksScreen = () => {
       Alert.alert("Por favor completa todos los campos");
     }
   };
-
+ 
   const handleEditTask = async (task) => {
     const updatedTitle = prompt("Nuevo título:", task.title);
     const updatedDescription = prompt("Nueva descripción:", task.description);
@@ -49,23 +41,19 @@ const TasksScreen = () => {
     const updatedTime = prompt("Nueva hora:", task.time);
     if (updatedTitle && updatedDescription && updatedStatus && updatedTime) {
       const updatedTask = {
-        ...task,
         title: updatedTitle,
         description: updatedDescription,
         status: updatedStatus,
         time: updatedTime,
+        created_at: new Date().toISOString(),
       };
-      try {
-        updateTask(task.id, updatedTask);
-      } catch (error) {
-        console.error('Error editing task:', error);
-      }
+      console.log(updatedTask);
     }
   };
 
   const handleDeleteTask = async (id) => {
     try {
-      deleteTask(id);
+      console.log(id, 'se borro');
     } catch (error) {
       console.error('Error deleting task:', error);
     }

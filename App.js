@@ -39,7 +39,7 @@ export default function App() {
         >
           <Tab.Screen name="Inicio" component={HomeScreen} />
           <Tab.Screen name="Tareas" component={TasksScreen} />
-          <Tab.Screen name="Calendario" component={CalendarScreen} />
+          <Tab.Screen name="Calendario"component={CalendarScreen} />
           <Tab.Screen name="Perfil" component={ProfileScreen} />
         </Tab.Navigator>
       </NavigationContainer>

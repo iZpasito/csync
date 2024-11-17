@@ -1,20 +1,46 @@
-import React, { useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, Button } from 'react-native';
+import React, { useEffect, useContext, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Button, FlatList } from 'react-native';
 import { PlaceContext } from '../controller/taskController';
+import * as SQLite from 'expo-sqlite';
+import TaskList from '../components/tareas';
+
 
 const HomeScreen = () => {
-  const { tasks, loadTasks, addTask } = useContext(PlaceContext);
+  const {tasks, addTask, loadTasks } = useContext(PlaceContext);
+  console.log(tasks[0],'datos')
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    status: "pendiente",
+    time: "",
+    created_at: new Date().toISOString(),
+  });
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
+
+/*   const addTask = async (task) => {
+    try {
+      const db = await SQLite.openDatabaseAsync('Csync');
+      const tareas = await db.runAsync(`INSERT INTO tasks (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)`
+        ,task.title, task.description, task.Status, task.time, task.created_at);
+        setNewTask(tareas);
+        console.log('Tarea Agregada con exito!');
+    } catch (error) {
+      console.error("Failed to add task:", error);
+    }
+  }; */
+
+ /*  const loadTasks = async () => {
+      const db = await SQLite.openDatabaseAsync('Csync');
+      const tareas = await db.getAllAsync (`SELECT * FROM tasks`);
+      setTasks(tareas);
+  }; */
 
   const handleAddTask = () => {
     const newTask = {
-      title: "Nueva Tarea",
-      description: "Descripción de la tarea",
-      Status: "pendiente",
-      time: "12:00",
+      title: "Nueva Tarea1",
+      description: "Descripción de la tarea1",
+      Status: "pendiente1",
+      time: "12:001",
       created_at: new Date().toISOString(),
     };
     addTask(newTask);
@@ -23,15 +49,23 @@ const HomeScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Tareas destacadas</Text>
-
-      {tasks.map((task, index) => (
-        <View key={index} style={styles.task}>
-          <Text style={styles.taskTitle}>{task.title}</Text>
-          <Text style={styles.taskTime}>{task.time}</Text>
-          <Text style={styles.taskDescription}>{task.description}</Text>
-        </View>
-      ))}
-
+      <Text style={styles.title}>{tasks}</Text>
+      {tasks.length === 0 ? (
+        <Text style={styles.noTasksText}>No hay tareas disponibles</Text>
+      ) : (
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id?.toString() || item.title}
+          renderItem={({ item }) => (
+            <View style={styles.taskContainer}>
+              <Text style={styles.taskTitle}>{item.title}</Text>
+              <Text style={styles.taskDescription}>{item.description}</Text>
+              <Text style={styles.taskStatus}>Estado: {item.Status}</Text>
+              <Text style={styles.taskTime}>Hora: {item.time}</Text>
+            </View>
+          )}
+        />
+      )}
       <Button title="Agregar Tarea" onPress={handleAddTask} />
     </ScrollView>
   );
