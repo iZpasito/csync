@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import TaskController from '../controller/taskController';
+import { PlaceContext } from '../controller/taskController';
 
 const TasksScreen = () => {
-  const [tasks, setTasks] = useState([]);
+  const { tasks, addTask, updateTask, deleteTask, loadTasks } = useContext(PlaceContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('pendiente');
@@ -15,24 +15,22 @@ const TasksScreen = () => {
     loadTasks();
   }, []);
 
-  const loadTasks = async () => {
-    try {
-      const fetchedTasks = await TaskController.fetchTasks();
-      setTasks(fetchedTasks);
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-    }
-  };
-
-  const addTask = async () => {
+  const handleAddTask = async () => {
     if (title && description) {
-      const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false }); // Formato 'HH:MM:SS'
+      const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false });
+      const newTask = {
+        title,
+        description,
+        status,
+        time: formattedTime,
+        date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+      };
       try {
-        await TaskController.addTask(title, description, status, formattedTime);
+        await addTask(newTask);
         setTitle('');           
         setDescription('');     
         setTime(new Date());    
-        loadTasks();            
       } catch (error) {
         console.error('Error adding task:', error);
       }
@@ -40,29 +38,33 @@ const TasksScreen = () => {
       Alert.alert("Por favor completa todos los campos");
     }
   };
-  
 
-  const deleteTask = async (id) => {
-    try {
-      await TaskController.removeTask(id);
-      loadTasks();
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
-  };
-
-  const editTask = async (id) => {
-    const updatedTitle = prompt("Nuevo título:");
-    const updatedDescription = prompt("Nueva descripción:");
-    const updatedStatus = prompt("Nuevo estado:");
-    const updatedTime = prompt("Nueva hora:");
+  const handleEditTask = async (task) => {
+    const updatedTitle = prompt("Nuevo título:", task.title);
+    const updatedDescription = prompt("Nueva descripción:", task.description);
+    const updatedStatus = prompt("Nuevo estado:", task.status);
+    const updatedTime = prompt("Nueva hora:", task.time);
     if (updatedTitle && updatedDescription && updatedStatus && updatedTime) {
+      const updatedTask = {
+        ...task,
+        title: updatedTitle,
+        description: updatedDescription,
+        status: updatedStatus,
+        time: updatedTime,
+      };
       try {
-        await TaskController.modifyTask(id, updatedTitle, updatedDescription, updatedStatus, updatedTime);
-        loadTasks();
+        await updateTask(task.id, updatedTask);
       } catch (error) {
         console.error('Error editing task:', error);
       }
+    }
+  };
+
+  const handleDeleteTask = async (id) => {
+    try {
+      await deleteTask(id);
+    } catch (error) {
+      console.error('Error deleting task:', error);
     }
   };
 
@@ -73,10 +75,10 @@ const TasksScreen = () => {
       <Text>{item.status}</Text>
       <Text>Hora: {item.time}</Text>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => editTask(item.id)}>
+        <TouchableOpacity onPress={() => handleEditTask(item)}>
           <Text style={styles.edit}>Editar</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => deleteTask(item.id)}>
+        <TouchableOpacity onPress={() => handleDeleteTask(item.id)}>
           <Text style={styles.delete}>Eliminar</Text>
         </TouchableOpacity>
       </View>
@@ -122,7 +124,7 @@ const TasksScreen = () => {
         />
       )}
       <Text>Hora seleccionada: {time.toTimeString().split(' ')[0]}</Text>
-      <Button title="Agregar Tarea" onPress={addTask} />
+      <Button title="Agregar Tarea" onPress={handleAddTask} />
     </View>
   );
 };

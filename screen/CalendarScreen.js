@@ -1,10 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, Image, Alert } from 'react-native';
 import { Agenda } from 'react-native-calendars';
-import * as ImagePicker from 'expo-image-picker';
+import ImagePickerComponent from '../components/ImagePicker';
+import { PlaceContext } from '../controller/taskController';
 
 const CalendarScreen = () => {
   const [items, setItems] = useState({});
+  const { addTask, tasks, loadTasks } = useContext(PlaceContext);
+
+  useEffect(() => {
+    loadTasks();
+    const calendarItems = {};
+    tasks.forEach((task) => {
+      const date = task.date;
+      if (!calendarItems[date]) {
+        calendarItems[date] = [];
+      }
+      calendarItems[date].push({
+        name: task.title,
+        height: 150,
+        imageUri: task.imageUri,
+      });
+    });
+    setItems(calendarItems);
+  }, [tasks]);
 
   const handleAddPhoto = async (day) => {
     Alert.alert(
@@ -28,55 +47,101 @@ const CalendarScreen = () => {
   };
 
   const handleTakePhoto = async (day) => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permisos Insuficientes', 'Necesitas otorgar permisos de cámara para tomar fotos.', [{ text: 'OK' }]);
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      addEventWithPhoto(day, result.uri);
+    const imageUri = await takeImageWithPicker();
+    if (imageUri) {
+      addEventWithPhoto(day, imageUri);
     }
   };
 
   const handlePickImage = async (day) => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permisos Insuficientes', 'Necesitas otorgar permisos de acceso a la galería para adjuntar fotos.', [{ text: 'OK' }]);
-      return;
+    const imageUri = await pickImageFromLibrary();
+    if (imageUri) {
+      addEventWithPhoto(day, imageUri);
     }
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+  const takeImageWithPicker = async () => {
+    return new Promise((resolve) => {
+      Alert.alert(
+        'Tomar Foto',
+        'Utiliza el componente de ImagePicker',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => resolve(null),
+          },
+          {
+            text: 'Tomar Foto',
+            onPress: async () => {
+              try {
+                const hasPermission = await ImagePickerComponent.verifyPermissions();
+                if (!hasPermission) {
+                  resolve(null);
+                  return;
+                }
+
+                const image = await ImagePickerComponent.takeImageHandler();
+                if (image) {
+                  resolve(image);
+                } else {
+                  resolve(null);
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Hubo un problema al tomar la foto.');
+                resolve(null);
+              }
+            },
+          },
+        ]
+      );
     });
+  };
 
-    if (!result.cancelled) {
-      addEventWithPhoto(day, result.uri);
-    }
+  const pickImageFromLibrary = async () => {
+    return new Promise((resolve) => {
+      Alert.alert(
+        'Adjuntar Foto',
+        'Utiliza el componente de ImagePicker',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => resolve(null),
+          },
+          {
+            text: 'Elegir Foto',
+            onPress: async () => {
+              try {
+                const image = await ImagePickerComponent.pickImageHandler();
+                if (image) {
+                  resolve(image);
+                } else {
+                  resolve(null);
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Hubo un problema al adjuntar la foto.');
+                resolve(null);
+              }
+            },
+          },
+        ]
+      );
+    });
   };
 
   const addEventWithPhoto = (day, uri) => {
     const selectedDate = day.dateString;
-    setItems((prevItems) => {
-      const newItems = { ...prevItems };
-      if (!newItems[selectedDate]) {
-        newItems[selectedDate] = [];
-      }
-      newItems[selectedDate].push({
-        name: 'Evento con foto',
-        height: 150,
-        imageUri: uri,
-      });
-      return newItems;
-    });
+    const newTask = {
+      title: 'Evento con foto',
+      description: 'Descripción del evento con foto',
+      status: 'pendiente',
+      time: '12:00',
+      date: selectedDate,
+      imageUri: uri,
+      created_at: new Date().toISOString(),
+    };
+    addTask(newTask);
   };
 
   const renderItem = (item) => {

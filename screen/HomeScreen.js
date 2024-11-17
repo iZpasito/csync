@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
-import Tareas from '../Models/ModelTask';
+import React, { useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { PlaceContext } from '../controller/taskController';
 
-const HomeScreen = ({ navigation }) => {
-  const [tasks, setTasks] = useState([]);
+const HomeScreen = () => {
+  const { tasks, loadTasks } = useContext(PlaceContext);
 
   useEffect(() => {
-    Tareas.getTasks(setTasks);
+    loadTasks();
   }, []);
 
   return (
