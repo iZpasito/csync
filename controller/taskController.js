@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 import * as SQLite from "expo-sqlite";
 import { CsyncDB } from "../database/db";
 
-const db = SQLite.openDatabaseAsync("tasks.db");
+const db = SQLite.openDatabaseAsync('tasks.db');
 
 export const PlaceContext = createContext({
   tasks: [],
@@ -27,7 +27,7 @@ function PlaceContextProvider({ children }) {
 
   const setupDatabase = async () => {
     try {
-      await CsyncDB(db);
+      await CsyncDB();
     } catch (error) {
       console.error("Error al configurar la base de datos:", error);
     }
@@ -39,6 +39,7 @@ function PlaceContextProvider({ children }) {
         "SELECT * FROM tasks",
         []
       );
+      console.log(result)
       setTasks(result.rows._array);
     } catch (error) {
       console.error("Failed to load tasks:", error);
