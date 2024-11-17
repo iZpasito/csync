@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PlaceContext } from '../controller/taskController';
 
+import * as SQLite from "expo-sqlite";
+
+
 const TasksScreen = () => {
   const { tasks, addTask, updateTask, deleteTask, loadTasks } = useContext(PlaceContext);
   const [title, setTitle] = useState('');
@@ -27,7 +30,7 @@ const TasksScreen = () => {
         created_at: new Date().toISOString(),
       };
       try {
-        await addTask(newTask);
+        addTask(newTask);
         setTitle('');           
         setDescription('');     
         setTime(new Date());    
@@ -53,7 +56,7 @@ const TasksScreen = () => {
         time: updatedTime,
       };
       try {
-        await updateTask(task.id, updatedTask);
+        updateTask(task.id, updatedTask);
       } catch (error) {
         console.error('Error editing task:', error);
       }
@@ -62,7 +65,7 @@ const TasksScreen = () => {
 
   const handleDeleteTask = async (id) => {
     try {
-      await deleteTask(id);
+      deleteTask(id);
     } catch (error) {
       console.error('Error deleting task:', error);
     }

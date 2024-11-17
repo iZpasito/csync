@@ -1,7 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
-import * as SQLite from "expo-sqlite";
-import { CsyncDB } from "../database/db";
+import { CsyncDB, insertarDatos } from "../database/db";
+import * as SQLite from 'expo-sqlite';
 
+// Crear una instancia de la base de datos que se usará en todas las funciones
 const db = SQLite.openDatabaseAsync('tasks.db');
 
 export const PlaceContext = createContext({
@@ -22,12 +23,12 @@ function PlaceContextProvider({ children }) {
   useEffect(() => {
     setupDatabase();
     loadTasks();
-    loadUsers();
   }, []);
 
   const setupDatabase = async () => {
     try {
-      await CsyncDB();
+      await CsyncDB(); // Configura la base de datos y crea las tablas si no existen
+      await insertarDatos(); // Inserta datos iniciales
       console.log("Tablas creadas o ya existen.");
     } catch (error) {
       console.error("Error al configurar la base de datos:", error);
@@ -36,11 +37,10 @@ function PlaceContextProvider({ children }) {
 
   const loadTasks = async () => {
     try {
-      const result = (await db).execAsync(
+      const result = await db.execAsync(
         "SELECT * FROM tasks",
         []
       );
-      console.log(result)
       setTasks(result.rows._array);
     } catch (error) {
       console.error("Failed to load tasks:", error);
@@ -49,50 +49,21 @@ function PlaceContextProvider({ children }) {
 
   const addTask = async (task) => {
     try {
-      const result = (await db).execAsync(
-        "INSERT INTO tasks (title, description, status, time, created_at) VALUES (?, ?, ?, ?, ?)",
-        [task.title, task.description, task.status, task.time, task.created_at]
-      );
-      setTasks((prevTasks) => [
+      const result = await db.runAsync(
+        "INSERT INTO tasks (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)"
+        ,task.title, task.description, task.Status, task.time, task.created_at);
+/*       setTasks((prevTasks) => [
         ...prevTasks,
         { id: result.insertId, ...task },
-      ]);
+      ]); */
     } catch (error) {
       console.error("Failed to add task:", error);
     }
   };
 
-  const updateTask = async (id, updatedTask) => {
+  /* const loadUsers = async () => {
     try {
-      (await db).execAsync (
-        "UPDATE tasks SET title = ?, description = ?, status = ?, time = ?, created_at = ? WHERE id = ?",
-        [updatedTask.title, updatedTask.description, updatedTask.status, updatedTask.time, updatedTask.created_at, id]
-      );
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === id ? { id, ...updatedTask } : task
-        )
-      );
-    } catch (error) {
-      console.error("Failed to update task:", error);
-    }
-  };
-
-  const deleteTask = async (id) => {
-    try {
-      (await db).execAsync(
-        "DELETE FROM tasks WHERE id = ?",
-        [id]
-      );
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-    } catch (error) {
-      console.error("Failed to delete task:", error);
-    }
-  };
-
-  const loadUsers = async () => {
-    try {
-      const result = (await db).execAsync(
+      const result = await db.execAsync(
         "SELECT * FROM users",
         []
       );
@@ -100,11 +71,11 @@ function PlaceContextProvider({ children }) {
     } catch (error) {
       console.error("Failed to load users:", error);
     }
-  };
+  }; */
 
-  const addUser = async (user) => {
+/*   const addUser = async (user) => {
     try {
-      const result = (await db).runAsync(
+      const result = await db.runAsync(
         "INSERT INTO users (username, email, password, is_premium, created_at) VALUES (?, ?, ?, ?, ?)",
         [user.username, user.email, user.password, user.is_premium, user.created_at]
       );
@@ -115,17 +86,14 @@ function PlaceContextProvider({ children }) {
     } catch (error) {
       console.error("Failed to add user:", error);
     }
-  };
+  }; */
 
   const value = {
     tasks,
-    users,
     addTask,
-    updateTask,
-    deleteTask,
+    updateTask: () => {}, // Puedes añadir la lógica para actualizar tareas
+    deleteTask: () => {}, // Puedes añadir la lógica para eliminar tareas
     loadTasks,
-    addUser,
-    loadUsers,
   };
 
   return (

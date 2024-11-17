@@ -1,13 +1,24 @@
 import React, { useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button } from 'react-native';
 import { PlaceContext } from '../controller/taskController';
 
 const HomeScreen = () => {
-  const { tasks, loadTasks } = useContext(PlaceContext);
+  const { tasks, loadTasks, addTask } = useContext(PlaceContext);
 
   useEffect(() => {
     loadTasks();
   }, []);
+
+  const handleAddTask = () => {
+    const newTask = {
+      title: "Nueva Tarea",
+      description: "Descripción de la tarea",
+      Status: "pendiente",
+      time: "12:00",
+      created_at: new Date().toISOString(),
+    };
+    addTask(newTask);
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -20,6 +31,8 @@ const HomeScreen = () => {
           <Text style={styles.taskDescription}>{task.description}</Text>
         </View>
       ))}
+
+      <Button title="Agregar Tarea" onPress={handleAddTask} />
     </ScrollView>
   );
 };
