@@ -6,8 +6,7 @@ import TaskList from '../components/tareas';
 
 
 const HomeScreen = () => {
-  const {tasks, addTask, loadTasks } = useContext(PlaceContext);
-  console.log(tasks[0],'datos')
+  const {tasks, addTask} = useContext(PlaceContext);
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
@@ -49,7 +48,6 @@ const HomeScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Tareas destacadas</Text>
-      <Text style={styles.title}>{tasks}</Text>
       {tasks.length === 0 ? (
         <Text style={styles.noTasksText}>No hay tareas disponibles</Text>
       ) : (

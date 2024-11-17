@@ -1,12 +1,18 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, Button, Image, Alert } from 'react-native';
 import { Agenda } from 'react-native-calendars';
-import ImagePickerComponent from '../components/ImagePicker';
+import {
+  verifyPermissions,
+  takeImageHandler,
+  pickImageHandler,
+} from '../components/ImagePicker';
 import { PlaceContext } from '../controller/taskController';
 
 const CalendarScreen = () => {
   const [items, setItems] = useState({});
-  const { addTask, tasks} = useContext(PlaceContext);
+  const { addTask, tasks } = useContext(PlaceContext);
+
+  console.log('Tareaaas',tasks)
 
   useEffect(() => {
     const calendarItems = {};
@@ -24,7 +30,7 @@ const CalendarScreen = () => {
     setItems(calendarItems);
   }, [tasks]);
 
-  const handleAddPhoto = async (day) => {
+  const handleAddPhoto = (day) => {
     Alert.alert(
       'Agregar Foto',
       'Elige cómo quieres agregar la foto',
@@ -46,87 +52,17 @@ const CalendarScreen = () => {
   };
 
   const handleTakePhoto = async (day) => {
-    const imageUri = await takeImageWithPicker();
+    const imageUri = await takeImageHandler();
     if (imageUri) {
       addEventWithPhoto(day, imageUri);
     }
   };
 
   const handlePickImage = async (day) => {
-    const imageUri = await pickImageFromLibrary();
+    const imageUri = await pickImageHandler();
     if (imageUri) {
       addEventWithPhoto(day, imageUri);
     }
-  };
-
-  const takeImageWithPicker = async () => {
-    return new Promise((resolve) => {
-      Alert.alert(
-        'Tomar Foto',
-        'Utiliza el componente de ImagePicker',
-        [
-          {
-            text: 'Cancelar',
-            style: 'cancel',
-            onPress: () => resolve(null),
-          },
-          {
-            text: 'Tomar Foto',
-            onPress: async () => {
-              try {
-                const hasPermission = await ImagePickerComponent.verifyPermissions();
-                if (!hasPermission) {
-                  resolve(null);
-                  return;
-                }
-
-                const image = await ImagePickerComponent.takeImageHandler();
-                if (image) {
-                  resolve(image);
-                } else {
-                  resolve(null);
-                }
-              } catch (error) {
-                Alert.alert('Error', 'Hubo un problema al tomar la foto.');
-                resolve(null);
-              }
-            },
-          },
-        ]
-      );
-    });
-  };
-
-  const pickImageFromLibrary = async () => {
-    return new Promise((resolve) => {
-      Alert.alert(
-        'Adjuntar Foto',
-        'Utiliza el componente de ImagePicker',
-        [
-          {
-            text: 'Cancelar',
-            style: 'cancel',
-            onPress: () => resolve(null),
-          },
-          {
-            text: 'Elegir Foto',
-            onPress: async () => {
-              try {
-                const image = await ImagePickerComponent.pickImageHandler();
-                if (image) {
-                  resolve(image);
-                } else {
-                  resolve(null);
-                }
-              } catch (error) {
-                Alert.alert('Error', 'Hubo un problema al adjuntar la foto.');
-                resolve(null);
-              }
-            },
-          },
-        ]
-      );
-    });
   };
 
   const addEventWithPhoto = (day, uri) => {

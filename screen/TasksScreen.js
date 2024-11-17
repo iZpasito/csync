@@ -8,9 +8,10 @@ const TasksScreen = () => {
   const [description, setDescription] = useState('');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { addTask, tasks } = useContext(PlaceContext);
+  
 
   useEffect(() => {
-    loadTasks();
   }, []);
 
   const handleAddTask = async () => {
@@ -23,6 +24,7 @@ const TasksScreen = () => {
         time: formattedTime,
         date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
+        imageUri: imageUri,
       };
       try {
         addTask(newTask);   
@@ -46,6 +48,7 @@ const TasksScreen = () => {
         status: updatedStatus,
         time: updatedTime,
         created_at: new Date().toISOString(),
+        imageUri: imageUri,
       };
       console.log(updatedTask);
     }

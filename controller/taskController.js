@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 import * as SQLite from "expo-sqlite";
 
 export const PlaceContext = createContext({
-  tasks: [],
+  tasks:'',
   addTask: (task) => {},
   loadTasks: (task) => {} 
 });
@@ -55,7 +55,7 @@ async function insertarDatos(){
         Status: task?.status || defaultTask.Status,
         time: task?.time || defaultTask.time,
         created_at: task?.created_at || defaultTask.created_at,
-        created_at: task?.imageUri || defaultTask.imageUri,
+        imageUri: task?.imageUri || defaultTask.imageUri,
       };
   
       const db = await SQLite.openDatabaseAsync('Csync'); 
