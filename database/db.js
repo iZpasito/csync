@@ -11,7 +11,8 @@ export async function CsyncDB() {
         description TEXT,
         Status TEXT,
         time TEXT,
-        created_at TEXT);
+        created_at TEXT,
+        imageUri TEXT);
       CREATE TABLE IF NOT EXISTS premium_status (
         id INTEGER PRIMARY KEY,
         description TEXT NOT NULL

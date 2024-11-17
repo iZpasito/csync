@@ -55,16 +55,18 @@ async function insertarDatos(){
         Status: task?.status || defaultTask.Status,
         time: task?.time || defaultTask.time,
         created_at: task?.created_at || defaultTask.created_at,
+        created_at: task?.imageUri || defaultTask.imageUri,
       };
   
       const db = await SQLite.openDatabaseAsync('Csync'); 
       const result = db.runAsync(
-        `INSERT OR IGNORE INTO TASKS (title, description, Status, time, created_at) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO TASKS (title, description, Status, time, created_at,imageUri) VALUES (?, ?, ?, ?, ?)`,
         taskToInsert.title,
         taskToInsert.description,
         taskToInsert.Status,
         taskToInsert.time,
-        taskToInsert.created_at);
+        taskToInsert.created_at,
+        taskToInsert.imageUri);
       setTasks(result);
     } catch (error) {
       console.error("Failed to add task:", error);

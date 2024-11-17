@@ -6,10 +6,9 @@ import { PlaceContext } from '../controller/taskController';
 
 const CalendarScreen = () => {
   const [items, setItems] = useState({});
-  const { addTask, tasks, loadTasks } = useContext(PlaceContext);
+  const { addTask, tasks} = useContext(PlaceContext);
 
   useEffect(() => {
-    loadTasks();
     const calendarItems = {};
     tasks.forEach((task) => {
       const date = task.date;
