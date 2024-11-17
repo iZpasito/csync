@@ -33,8 +33,8 @@ const ImagePickerComponent = ({ onImageSelected }) => {
       console.log("si entro CAMARAAA")
 
       if (!image.canceled ) {
-        setPickedImage(image.uri);
-        onImageSelected(image.uri);
+        setPickedImage(image.assets[0].uri);
+        onImageSelected(image.assets[0].uri);
       }
     } catch (error) {
       Alert.alert('Error', 'Hubo un problema al tomar la foto. Por favor intenta nuevamente.');

@@ -4,7 +4,9 @@ import * as SQLite from "expo-sqlite";
 export const PlaceContext = createContext({
   tasks:'',
   addTask: (task) => {},
-  loadTasks: (task) => {} 
+  loadTasks: (task) => {},
+  deleteTask: (id) =>{},
+  updateTask: (id,task) =>{}
 });
 
 function PlaceContextProvider({ children }) {
@@ -79,64 +81,39 @@ async function insertarDatos(){
     loadTasks();
   }, []);
   
-/*   const updateTask = async (id, updatedTask) => {
+  const updateTask = async (id, updatedTask) => {
     try {
-      (await db).execAsync (
-        "UPDATE tasks SET title = ?, description = ?, status = ?, time = ?, created_at = ? WHERE id = ?",
-        [updatedTask.title, updatedTask.description, updatedTask.status, updatedTask.time, updatedTask.created_at, id]
+      const db = await SQLite.openDatabaseAsync('Csync'); 
+      await db.execAsync (
+        `UPDATE TASKS SET title = ?, description = ?, Status = ?, time = ?, created_at = ?, imageUri = ? WHERE id = ?`,
+      updatedTask.title, updatedTask.description, updatedTask.Status, updatedTask.time, updatedTask.created_at, updateTask.imageUri, id
       );
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
           task.id === id ? { id, ...updatedTask } : task
         )
       );
+      console.log('Datos modificados');
     } catch (error) {
-      console.error("Failed to update task:", error);
+      console.error("Problema al editar los datos", error);
     }
-  }; */
+  }; 
 
- /*  const deleteTask = async (id) => {
+const deleteTask = async (id) => {
     try {
-      (await db).execAsync(
-        "DELETE FROM tasks WHERE id = ?",
-        [id]
-      );
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+      const db = await SQLite.openDatabaseAsync('Csync'); 
+      await db.runAsync(`DELETE FROM TASKS WHERE id = ?`,id);
+      console.log("Elemento eliminado con exito")
+      loadTasks();
     } catch (error) {
       console.error("Failed to delete task:", error);
     }
-  }; */
-
-  /* const loadUsers = async () => {
-    try {
-      const result = (await db).execAsync(
-        "SELECT * FROM users",
-        []
-      );
-      setUsers(result.rows._array);
-    } catch (error) {
-      console.error("Failed to load users:", error);
-    }
-  }; */
-
- /*  const addUser = async (user) => {
-    try {
-      const result = (await db).runAsync(
-        "INSERT INTO users (username, email, password, is_premium, created_at) VALUES (?, ?, ?, ?, ?)",
-        [user.username, user.email, user.password, user.is_premium, user.created_at]
-      );
-      setUsers((prevUsers) => [
-        ...prevUsers,
-        { id: result.insertId, ...user },
-      ]);
-    } catch (error) {
-      console.error("Failed to add user:", error);
-    }
-  }; */
-
+  }; 
   const value = {
     tasks: tareas,
     addTask,
+    deleteTask,
+    updateTask
   };
 
   return (
