@@ -44,13 +44,14 @@ async function insertarDatos(){
 
   const addTask = async (task) => {
     try {
+      console.log("LA TAREA",task)
       const defaultTask = {
         title: task.title,
         description: task.description,
         Status: task.Status,
         time: task.time,
         created_at: new Date().toISOString(),
-        imageUri: task.imageUri,
+        imageUri: task?.imageUri  !== undefined ? task.imageUri : "",
       };
       const taskToInsert = {
         title: task?.title || defaultTask.title,
@@ -63,7 +64,7 @@ async function insertarDatos(){
   
       const db = await SQLite.openDatabaseAsync('Csync'); 
       const result = db.runAsync(
-        `INSERT OR IGNORE INTO TASKS (title, description, Status, time, created_at,imageUri) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO TASKS (title, description, Status, time, created_at, imageUri) VALUES (?, ?, ?, ?, ?, ?)`,
         taskToInsert.title,
         taskToInsert.description,
         taskToInsert.Status,
@@ -71,6 +72,8 @@ async function insertarDatos(){
         taskToInsert.created_at,
         taskToInsert.imageUri);
       setTasks(result);
+      loadTasks();
+      console.log("Tarea Agregada Exitosamente!");
     } catch (error) {
       console.error("Failed to add task:", error);
     }

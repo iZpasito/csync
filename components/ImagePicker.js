@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Button, Image, Alert, Text, StyleSheet } from 'react-native';
+import { View, Button, Image, Alert, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const ImagePickerComponent = ({ onImageSelected }) => {
-  const [pickedImage, setPickedImage] = useState(null);
+  const [pickedImage, setPickedImage] = useState();
 
   const verifyPermissions = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -28,9 +28,8 @@ const ImagePickerComponent = ({ onImageSelected }) => {
       const image = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [16, 9],
-        quality: 0.5,
+        quality: 0.8,
       });
-      console.log("si entro CAMARAAA")
 
       if (!image.canceled ) {
         setPickedImage(image.assets[0].uri);
@@ -48,7 +47,6 @@ const ImagePickerComponent = ({ onImageSelected }) => {
         aspect: [16, 9],
         quality: 0.5,
       });
-      console.log("si entro pickeimage")
       if (!image.canceled) {
         setPickedImage(image.assets[0].uri);
         onImageSelected(image.assets[0].uri);
@@ -64,7 +62,7 @@ const ImagePickerComponent = ({ onImageSelected }) => {
       <Button title="Elegir desde la Galería" onPress={pickImageHandler} />
       {pickedImage && (
         <View style={styles.imagePreview}>
-          <Image style={styles.image} source={{ uri: pickedImage }} />
+          <Image style={styles.image} source={{ uri:pickedImage}} />
         </View>
       )}
     </View>

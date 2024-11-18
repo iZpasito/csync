@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert, Modal, Image } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PlaceContext } from '../controller/taskController';
 import ImagePickerComponent from '../components/ImagePicker';
@@ -12,8 +12,10 @@ const TasksScreen = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [imageUri, setImageUri] = useState('');
+  const [imageUri, setImageUri] = useState();
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+
   const { addTask, tasks, deleteTask, updateTask } = useContext(PlaceContext);
 
   useEffect(() => {}, []);
@@ -34,7 +36,7 @@ const TasksScreen = () => {
         addTask(newTask);
         setTitle(''); // Limpiar campos después de agregar la tarea
         setDescription('');
-        setImageUri('');
+        setImageUri();
       } catch (error) {
         console.error('Error adding task:', error);
       }
@@ -49,8 +51,8 @@ const TasksScreen = () => {
     setTime(currentTime);
   };
 
-  const handleImageSelected = (uri) => {
-    setImageUri(uri);
+  const handleImageSelected = (imageUri) => {
+    setImageUri(imageUri);
     setShowImagePicker(false); // Ocultar el modal de ImagePicker después de seleccionar una imagen
   };
 
@@ -58,38 +60,28 @@ const TasksScreen = () => {
     setEditingTask(task);
     setTitle(task.title);
     setDescription(task.description);
-    Alert.alert(
-      'Editar Tarea',
-      'Edita los detalles de la tarea.',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => setEditingTask(null),
-        },
-        {
-          text: 'Guardar',
-          onPress: () => {
-            if (editingTask) {
-              const updatedTask = {
-                ...editingTask,
-                title: title,
-                description: description,
-              };
-              // Actualizar la tarea aquí
-              updateTask(id,updatedTask);
-              setEditingTask(null);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+    setImageUri(task.imageUri);
+    SetStatus(task.status);
+    setModalVisible(true); // Mostrar el modal para editar la tarea
   };
+  const handleSaveTask = () => {
+    if (editingTask) {
+      const updatedTask = {
+        ...editingTask,
+        title,
+        description,
+        imageUri,
+      };
 
-  // Función para manejar la eliminación de una tarea
+      // Actualizar la tarea en la base de datos
+      updateTask(editingTask.id, updatedTask);
+
+      // Cerrar el modal después de guardar
+      setModalVisible(false);
+      setEditingTask(null);
+    }
+  };
   const handleDeleteTask = (id) => {
-    console.log("ESTE ES EL ID",id);
     Alert.alert(
       'Eliminar Tarea',
       '¿Estás seguro de que deseas eliminar esta tarea?',
@@ -120,9 +112,9 @@ const TasksScreen = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.task}>
-          <Text>{item.title}</Text>
-          <Text>{item.description}</Text>
-          <Text>{item.status}</Text>
+          <Text>Titulo: {item.title}</Text>
+          <Text>Descripcion{item.description}</Text>
+          <Text>Premium: {item.status != 1 ? "No"  : "Si"}</Text>
           <Text>Hora: {item.time}</Text>
           {item.imageUri && (
             <View style={styles.imageContainer}>
@@ -140,7 +132,43 @@ const TasksScreen = () => {
         </View>
         )}
       />
+    <Modal
+      visible={isModalVisible}
+      animationType="slide"
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Editar Tarea</Text>
 
+          <TextInput
+            style={styles.input}
+            placeholder="Título"
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={setDescription}
+          />
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
+              <Text style={styles.buttonText}>Guardar Cambios</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => {
+              setModalVisible(false);
+              setEditingTask(null);
+            }}>
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
       <Text style={styles.title}>Agregar Tarea</Text>
       <TextInput
         style={styles.input}
@@ -189,6 +217,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo translúcido para el modal
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  saveButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#ff4d4d',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   title: {
     fontSize: 24,

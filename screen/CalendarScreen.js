@@ -12,9 +12,10 @@ const CalendarScreen = () => {
   const [items, setItems] = useState({});
   const { addTask, tasks } = useContext(PlaceContext);
 
-  useEffect(() => {
+  /* useEffect(() => {
     const calendarItems = {};
-    tasks.forEach((task) => {
+
+    tasks[0].forEach((task) => {
       const date = task.date;
       if (!calendarItems[date]) {
         calendarItems[date] = [];
@@ -26,7 +27,7 @@ const CalendarScreen = () => {
       });
     });
     setItems(calendarItems);
-  }, [tasks]);
+  }, [tasks]); */
 
   const handleAddPhoto = (day) => {
     Alert.alert(

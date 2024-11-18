@@ -8,7 +8,7 @@ import PlaceContextProvider from './controller/taskController';
 import HomeScreen from './screen/HomeScreen';
 import CalendarScreen from './screen/CalendarScreen';
 import ProfileScreen from './screen/ProfileScreen';
-import TasksScreen from './screen/TasksScreen';
+import Tareas from './screen/Tareas';
 
 // Crear el Tab Navigator
 const Tab = createBottomTabNavigator();
@@ -42,7 +42,7 @@ export default function App() {
         >
           {/* Definir las pantallas del Tab Navigator */}
           <Tab.Screen name="Inicio" component={HomeScreen} />
-          <Tab.Screen name="Tareas" component={TasksScreen} />
+          <Tab.Screen name="Tareas" component={Tareas} />
           <Tab.Screen name="Calendario" component={CalendarScreen} />
           <Tab.Screen name="Perfil" component={ProfileScreen} />
         </Tab.Navigator>
