@@ -22,7 +22,15 @@ function PlaceContextProvider({ children }) {
 
   async function CsyncDB() {
     const db = await SQLite.openDatabaseAsync("Csync");
+
+    // Enable WAL mode for better concurrency
     await db.execAsync("PRAGMA journal_mode = WAL");
+
+    // Drop existing tables if they exist
+    await db.execAsync("DROP TABLE IF EXISTS TASKS;");
+    await db.execAsync("DROP TABLE IF EXISTS usuarios;");
+
+    // Recreate tables
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,6 +39,9 @@ function PlaceContextProvider({ children }) {
         is_premium INTEGER DEFAULT 0,
         is_admin INTEGER DEFAULT 0
       );
+    `);
+
+    await db.execAsync(`
       CREATE TABLE IF NOT EXISTS TASKS (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -48,6 +59,8 @@ function PlaceContextProvider({ children }) {
     await db.runAsync(
       `INSERT OR IGNORE INTO usuarios (nombre_usuario, clave, is_admin) VALUES ('admin', 'admin123', 1);`
     );
+
+    console.log("Database initialized and tables recreated successfully.");
   }
 
   async function loginUser(nombre_usuario, clave) {
