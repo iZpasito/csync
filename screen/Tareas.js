@@ -1,100 +1,98 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Button, TextInput, Alert, Modal, Image } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { PlaceContext } from '../controller/taskController';
-import ImagePickerComponent from '../components/ImagePicker';
+import React, { useContext, useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Button,
+  Alert,
+  Modal,
+  TextInput,
+  Image,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import ImagePickerComponent from "../components/ImagePicker";
+import { PlaceContext } from "../controller/taskController";
 
+const Tareas = () => {
+  const {
+    tasks,
+    deleteTask,
+    logoutUser,
+    currentUser,
+    getAllUsers,
+    updateUserPremiumStatus,
+    addTask,
+    updateTask,
+  } = useContext(PlaceContext);
 
-const TasksScreen = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [Status, SetStatus] = useState('3');
+  const navigation = useNavigation();
+  const [taskCounts, setTaskCounts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [imageUri, setImageUri] = useState();
-  const [showImagePicker, setShowImagePicker] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [imageUri, setImageUri] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const { addTask, tasks, deleteTask, updateTask } = useContext(PlaceContext);
-
-  useEffect(() => {}, []);
-
-  const handleAddTask = async () => {
-    if (title && description) {
-      const formattedTime = time.toLocaleTimeString('es-ES', { hour12: false });
-      const newTask = {
-        title: title,
-        description: description,
-        status: Status,
-        time: formattedTime,
-        date: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        imageUri: imageUri, // Incluir la URI de la imagen
-      };
-      try {
-        addTask(newTask);
-        setTitle(''); // Limpiar campos después de agregar la tarea
-        setDescription('');
-        setImageUri();
-      } catch (error) {
-        console.error('Error adding task:', error);
-      }
-    } else {
-      Alert.alert('Por favor completa todos los campos');
+  useEffect(() => {
+    if (currentUser?.is_admin) {
+      loadTaskCounts();
     }
-  };
+  }, [tasks]);
 
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(false);
-    setTime(currentTime);
-  };
-
-  const handleImageSelected = (imageUri) => {
-    setImageUri(imageUri);
-    setShowImagePicker(false); // Ocultar el modal de ImagePicker después de seleccionar una imagen
+  const loadTaskCounts = async () => {
+    setIsLoading(true);
+    const users = await getAllUsers();
+    const counts = users.map((user) => {
+      const userTasks = tasks.filter((task) => task.user_id === user.id);
+      return { ...user, taskCount: userTasks.length };
+    });
+    setTaskCounts(counts);
+    setIsLoading(false);
   };
 
   const handleEditTask = (task) => {
     setEditingTask(task);
     setTitle(task.title);
     setDescription(task.description);
+    setTime(new Date(task.time || new Date()));
     setImageUri(task.imageUri);
-    SetStatus(task.status);
-    setModalVisible(true); // Mostrar el modal para editar la tarea
+    setModalVisible(true);
   };
-  const handleSaveTask = () => {
+
+  const handleSaveTask = async () => {
     if (editingTask) {
       const updatedTask = {
         ...editingTask,
         title,
         description,
+        time: time.toLocaleTimeString("es-ES", { hour12: false }),
         imageUri,
       };
 
-      // Actualizar la tarea en la base de datos
-      updateTask(editingTask.id, updatedTask);
-
-      // Cerrar el modal después de guardar
+      await updateTask(editingTask.id, updatedTask);
       setModalVisible(false);
       setEditingTask(null);
     }
   };
-  const handleDeleteTask = (id) => {
+
+  const handleLogout = () => {
     Alert.alert(
-      'Eliminar Tarea',
-      '¿Estás seguro de que deseas eliminar esta tarea?',
+      "Cerrar Sesión",
+      "¿Estás seguro de que deseas cerrar sesión?",
       [
+        { text: "Cancelar", style: "cancel" },
         {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
+          text: "Cerrar Sesión",
+          style: "destructive",
           onPress: () => {
-            deleteTask(id);
+            logoutUser();
+            navigation.navigate("Login");
           },
         },
       ],
@@ -102,113 +100,107 @@ const TasksScreen = () => {
     );
   };
 
-
+  if (currentUser?.is_admin) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Usuarios y Tareas</Text>
+        {isLoading ? (
+          <Text>Cargando...</Text>
+        ) : (
+          <FlatList
+            data={taskCounts}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.task}>
+                <Text style={styles.taskTitle}>Usuario: {item.nombre_usuario}</Text>
+                <Text>Tareas asignadas: {item.taskCount}</Text>
+                <Text>Premium: {item.is_premium ? "Sí" : "No"}</Text>
+                <Button
+                  title={`Hacer ${item.is_premium ? "No Premium" : "Premium"}`}
+                  onPress={() =>
+                    updateUserPremiumStatus(item.id, item.is_premium ? 0 : 1)
+                  }
+                />
+              </View>
+            )}
+          />
+        )}
+        <Button title="Cerrar Sesión" color="red" onPress={handleLogout} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Hoy</Text>
+      <Text style={styles.title}>Mis Tareas</Text>
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.task}>
-          <Text>Titulo: {item.title}</Text>
-          <Text>Descripcion{item.description}</Text>
-          <Text>Premium: {item.status != 1 ? "No"  : "Si"}</Text>
-          <Text>Hora: {item.time}</Text>
-          {item.imageUri && (
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: item.imageUri }} style={styles.image} />
-            </View>
-          )}
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={() => handleEditTask(item.id, item)}>
-              <Text style={styles.edit}>Editar</Text>
+            <Text style={styles.taskTitle}>Título: {item.title}</Text>
+            <Text>Fecha: {item.date}</Text>
+            <Text>Hora: {item.time}</Text>
+            <TouchableOpacity
+              onPress={() => handleEditTask(item)}
+              style={styles.editButton}
+            >
+              <Text style={styles.editText}>Editar</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteTask(item.id)}>
-              <Text style={styles.delete}>Eliminar</Text>
+            <TouchableOpacity
+              onPress={() => deleteTask(item.id)}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteText}>Eliminar</Text>
             </TouchableOpacity>
           </View>
-        </View>
         )}
       />
-    <Modal
-      visible={isModalVisible}
-      animationType="slide"
-      onRequestClose={() => setModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Editar Tarea</Text>
+      <Button
+        title="Agregar Nueva Tarea"
+        onPress={() => navigation.navigate("Calendario")}
+      />
+      <Button title="Cerrar Sesión" color="red" onPress={handleLogout} />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Título"
-            value={title}
-            onChangeText={setTitle}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Descripción"
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
-              <Text style={styles.buttonText}>Guardar Cambios</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelButton} onPress={() => {
-              setModalVisible(false);
-              setEditingTask(null);
-            }}>
-              <Text style={styles.buttonText}>Cancelar</Text>
-            </TouchableOpacity>
+      {/* Modal for Editing Tasks */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Editar Tarea</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Título"
+              value={title}
+              onChangeText={setTitle}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Descripción"
+              value={description}
+              onChangeText={setDescription}
+            />
+            <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
+            {showTimePicker && (
+              <DateTimePicker
+                value={time}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={(event, selectedTime) =>
+                  setTime(selectedTime || time)
+                }
+              />
+            )}
+            <ImagePickerComponent onImageSelected={(uri) => setImageUri(uri)} />
+            <Button title="Guardar Cambios" onPress={handleSaveTask} />
+            <Button
+              title="Cancelar"
+              color="red"
+              onPress={() => setModalVisible(false)}
+            />
           </View>
         </View>
-      </View>
-    </Modal>
-      <Text style={styles.title}>Agregar Tarea</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Título"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Descripción"
-        value={description}
-        onChangeText={setDescription}
-      />
-      <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
-      {showTimePicker && (
-        <DateTimePicker
-          value={time}
-          mode="time"
-          is24Hour={true}
-          display="default"
-          onChange={onTimeChange}
-        />
-      )}
-      <Text>Hora seleccionada: {time.toTimeString().split(' ')[0]}</Text>
-
-      <Button title="Adjuntar Imagen" onPress={() => setShowImagePicker(true)} />
-
-      <Modal visible={showImagePicker} animationType="slide">
-        <ImagePickerComponent onImageSelected={handleImageSelected} />
-        <Button title="Cancelar" onPress={() => setShowImagePicker(false)} />
       </Modal>
-
-      {imageUri && (
-        <View style={styles.imagePreview}>
-          <Text>Imagen seleccionada:</Text>
-          <Image source={{ uri: imageUri }} style={styles.image} />
-        </View>
-      )}
-
-      <Button title="Agregar Tarea" onPress={handleAddTask} />
     </View>
   );
 };
@@ -218,92 +210,63 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo translúcido para el modal
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  saveButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  cancelButton: {
-    backgroundColor: '#ff4d4d',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   title: {
-    fontSize: 24,
+    fontSize: 22,
+    fontWeight: "bold",
     marginBottom: 10,
   },
   task: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     padding: 15,
     marginBottom: 10,
     borderRadius: 10,
   },
+  taskTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  editButton: {
+    backgroundColor: "blue",
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 5,
+  },
+  editText: {
+    color: "white",
+    textAlign: "center",
+  },
+  deleteButton: {
+    backgroundColor: "red",
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 5,
+  },
+  deleteText: {
+    color: "white",
+    textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginBottom: 10,
+  },
   input: {
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  edit: {
-    color: 'blue',
-  },
-  delete: {
-    color: 'red',
-  },
-  imagePreview: {
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-  },
-  imageContainer: {
-    marginTop: 10,
-  },
 });
 
-export default TasksScreen;
+export default Tareas;

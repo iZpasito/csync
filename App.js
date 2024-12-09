@@ -1,51 +1,64 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import PlaceContextProvider from './controller/taskController';
+import React, { useContext, useEffect } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import Icon from "react-native-vector-icons/FontAwesome";
+import PlaceContextProvider, { PlaceContext } from "./controller/taskController";
 
-// Importar las pantallas desde la carpeta screen
-import HomeScreen from './screen/HomeScreen';
-import CalendarScreen from './screen/CalendarScreen';
-import ProfileScreen from './screen/ProfileScreen';
-import Tareas from './screen/Tareas';
+import HomeScreen from "./screen/HomeScreen";
+import CalendarScreen from "./screen/CalendarScreen";
+import ProfileScreen from "./screen/ProfileScreen";
+import Tareas from "./screen/Tareas";
+import LoginScreen from "./screen/login";
+import RegisterScreen from "./screen/register";
 
-// Crear el Tab Navigator
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+function AppNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === "Inicio") iconName = "home";
+          else if (route.name === "Tareas") iconName = "list";
+          else if (route.name === "Calendario") iconName = "calendar";
+          else if (route.name === "Perfil") iconName = "user";
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: "blue",
+        tabBarInactiveTintColor: "gray",
+      })}
+    >
+      <Tab.Screen name="Inicio" component={HomeScreen} />
+      <Tab.Screen name="Tareas" component={Tareas} />
+      <Tab.Screen name="Calendario" component={CalendarScreen} />
+      <Tab.Screen name="Perfil" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function AuthNavigator() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function MainApp() {
+  const { isLoggedIn } = useContext(PlaceContext);
+
+  return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+}
 
 export default function App() {
   return (
-    <PlaceContextProvider> 
-      <NavigationContainer> 
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-
-              // Asignar iconos según el nombre de la pantalla
-              if (route.name === 'Inicio') {
-                iconName = focused ? 'home' : 'home';
-              } else if (route.name === 'Tareas') {
-                iconName = focused ? 'list' : 'list';
-              } else if (route.name === 'Calendario') {
-                iconName = focused ? 'calendar' : 'calendar';
-              } else if (route.name === 'Perfil') {
-                iconName = focused ? 'user' : 'user';
-              }
-
-              // Devolver el icono de FontAwesome
-              return <Icon name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: 'blue',
-            tabBarInactiveTintColor: 'gray',
-          })}
-        >
-          {/* Definir las pantallas del Tab Navigator */}
-          <Tab.Screen name="Inicio" component={HomeScreen} />
-          <Tab.Screen name="Tareas" component={Tareas} />
-          <Tab.Screen name="Calendario" component={CalendarScreen} />
-          <Tab.Screen name="Perfil" component={ProfileScreen} />
-        </Tab.Navigator>
+    <PlaceContextProvider>
+      <NavigationContainer>
+        <MainApp />
       </NavigationContainer>
     </PlaceContextProvider>
   );

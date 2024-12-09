@@ -1,102 +1,95 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Image, Alert } from 'react-native';
-import { Agenda } from 'react-native-calendars';
+import React, { useContext, useState } from "react";
 import {
-  verifyPermissions,
-  takeImageHandler,
-  pickImageHandler,
-} from '../components/ImagePicker';
-import { PlaceContext } from '../controller/taskController';
+  View,
+  Text,
+  Button,
+  Alert,
+  StyleSheet,
+  Image,
+  TextInput,
+} from "react-native";
+import { Agenda } from "react-native-calendars";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { PlaceContext } from "../controller/taskController";
+import ImagePickerComponent from "../components/ImagePicker";
 
-const CalendarScreen = () => {
-  const [items, setItems] = useState({});
-  const { addTask, tasks } = useContext(PlaceContext);
+const CalendarScreen = ({ navigation }) => {
+  const { addTask } = useContext(PlaceContext);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [time, setTime] = useState(new Date());
+  const [imageUri, setImageUri] = useState();
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
-  /* useEffect(() => {
-    const calendarItems = {};
-
-    tasks[0].forEach((task) => {
-      const date = task.date;
-      if (!calendarItems[date]) {
-        calendarItems[date] = [];
-      }
-      calendarItems[date].push({
-        name: task.title,
-        height: 150,
-        imageUri: task.imageUri,
-      });
-    });
-    setItems(calendarItems);
-  }, [tasks]); */
-
-  const handleAddPhoto = (day) => {
-    Alert.alert(
-      'Agregar Foto',
-      'Elige cómo quieres agregar la foto',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Tomar Foto',
-          onPress: () => handleTakePhoto(day),
-        },
-        {
-          text: 'Adjuntar Foto',
-          onPress: () => handlePickImage(day),
-        },
-      ]
-    );
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setShowTimePicker(false);
+    setTime(currentTime);
   };
 
-  const handleTakePhoto = async (day) => {
-    const imageUri = await takeImageHandler();
-    if (imageUri) {
-      addEventWithPhoto(day, imageUri);
+  const handleAddTask = async () => {
+    if (!selectedDate || !title.trim() || !description.trim()) {
+      Alert.alert("Error", "Por favor completa todos los campos requeridos.");
+      return;
     }
-  };
 
-  const handlePickImage = async (day) => {
-    const imageUri = await pickImageHandler();
-    if (imageUri) {
-      addEventWithPhoto(day, imageUri);
-    }
-  };
-
-  const addEventWithPhoto = (day, uri) => {
-    const selectedDate = day.dateString;
     const newTask = {
-      title: 'Evento con foto',
-      description: 'Descripción del evento con foto',
-      status: 'pendiente',
-      time: '12:00',
+      title,
+      description,
+      time: time.toLocaleTimeString("es-ES", { hour12: false }),
       date: selectedDate,
-      imageUri: uri,
-      created_at: new Date().toISOString(),
+      imageUri,
     };
-    addTask(newTask);
-  };
 
-  const renderItem = (item) => {
-    return (
-      <View style={styles.item}>
-        <Text>{item.name}</Text>
-        {item.imageUri && (
-          <Image source={{ uri: item.imageUri }} style={styles.image} />
-        )}
-      </View>
-    );
+    try {
+      await addTask(newTask);
+      Alert.alert("Éxito", "Tarea agregada correctamente.");
+      navigation.navigate("Tareas");
+    } catch (error) {
+      console.error("Error al agregar tarea:", error);
+      Alert.alert("Error", "No se pudo agregar la tarea.");
+    }
   };
 
   return (
     <View style={styles.container}>
       <Agenda
-        items={items}
-        onDayPress={(day) => handleAddPhoto(day)}
-        selected={new Date().toISOString().split('T')[0]}
-        renderItem={renderItem}
+        items={{}}
+        onDayPress={(day) => setSelectedDate(day.dateString)}
+        selected={selectedDate}
       />
+      <Text style={styles.label}>Título:</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Título"
+        value={title}
+        onChangeText={setTitle}
+      />
+      <Text style={styles.label}>Descripción:</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción"
+        value={description}
+        onChangeText={setDescription}
+      />
+      <Text style={styles.label}>Imagen:</Text>
+      <ImagePickerComponent onImageSelected={setImageUri} />
+      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
+      <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
+      {showTimePicker && (
+        <DateTimePicker
+          value={time}
+          mode="time"
+          is24Hour
+          display="default"
+          onChange={onTimeChange}
+        />
+      )}
+      <Text style={styles.timeLabel}>
+        Hora seleccionada: {time.toLocaleTimeString("es-ES", { hour12: false })}
+      </Text>
+      <Button title="Agregar Tarea" onPress={handleAddTask} />
     </View>
   );
 };
@@ -104,24 +97,27 @@ const CalendarScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  item: {
-    backgroundColor: 'white',
     padding: 20,
-    borderRadius: 10,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   image: {
-    width: '100%',
-    height: 100,
+    width: "100%",
+    height: 150,
+    marginVertical: 10,
+  },
+  timeLabel: {
+    fontSize: 16,
     marginTop: 10,
-    borderRadius: 10,
   },
 });
 
