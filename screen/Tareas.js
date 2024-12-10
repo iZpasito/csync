@@ -19,18 +19,14 @@ import { PlaceContext } from "../controller/taskController";
 const Tareas = () => {
   const {
     tasks,
+    loadTasks,
     deleteTask,
     logoutUser,
     currentUser,
-    getAllUsers,
-    updateUserPremiumStatus,
-    addTask,
     updateTask,
   } = useContext(PlaceContext);
 
   const navigation = useNavigation();
-  const [taskCounts, setTaskCounts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -40,21 +36,8 @@ const Tareas = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    if (currentUser?.is_admin) {
-      loadTaskCounts();
-    }
-  }, [tasks]);
-
-  const loadTaskCounts = async () => {
-    setIsLoading(true);
-    const users = await getAllUsers();
-    const counts = users.map((user) => {
-      const userTasks = tasks.filter((task) => task.user_id === user.id);
-      return { ...user, taskCount: userTasks.length };
-    });
-    setTaskCounts(counts);
-    setIsLoading(false);
-  };
+    loadTasks(); // Cargar las tareas al iniciar
+  }, []);
 
   const handleEditTask = (task) => {
     setEditingTask(task);
@@ -66,6 +49,11 @@ const Tareas = () => {
   };
 
   const handleSaveTask = async () => {
+    if (!title.trim() || !description.trim()) {
+      Alert.alert("Error", "Por favor completa todos los campos.");
+      return;
+    }
+
     if (editingTask) {
       const updatedTask = {
         ...editingTask,
@@ -75,9 +63,14 @@ const Tareas = () => {
         imageUri,
       };
 
-      await updateTask(editingTask.id, updatedTask);
-      setModalVisible(false);
-      setEditingTask(null);
+      try {
+        await updateTask(editingTask.id, updatedTask);
+        setModalVisible(false);
+        setEditingTask(null);
+      } catch (error) {
+        console.error("Error al guardar la tarea:", error);
+        Alert.alert("Error", "No se pudo guardar la tarea.");
+      }
     }
   };
 
@@ -99,36 +92,6 @@ const Tareas = () => {
       { cancelable: true }
     );
   };
-
-  if (currentUser?.is_admin) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Usuarios y Tareas</Text>
-        {isLoading ? (
-          <Text>Cargando...</Text>
-        ) : (
-          <FlatList
-            data={taskCounts}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.task}>
-                <Text style={styles.taskTitle}>Usuario: {item.nombre_usuario}</Text>
-                <Text>Tareas asignadas: {item.taskCount}</Text>
-                <Text>Premium: {item.is_premium ? "Sí" : "No"}</Text>
-                <Button
-                  title={`Hacer ${item.is_premium ? "No Premium" : "Premium"}`}
-                  onPress={() =>
-                    updateUserPremiumStatus(item.id, item.is_premium ? 0 : 1)
-                  }
-                />
-              </View>
-            )}
-          />
-        )}
-        <Button title="Cerrar Sesión" color="red" onPress={handleLogout} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -162,7 +125,7 @@ const Tareas = () => {
       />
       <Button title="Cerrar Sesión" color="red" onPress={handleLogout} />
 
-      {/* Modal for Editing Tasks */}
+      {/* Modal para editar tarea */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -184,14 +147,13 @@ const Tareas = () => {
               <DateTimePicker
                 value={time}
                 mode="time"
-                is24Hour={true}
+                is24Hour
                 display="default"
-                onChange={(event, selectedTime) =>
-                  setTime(selectedTime || time)
-                }
+                onChange={(event, selectedTime) => setTime(selectedTime || time)}
               />
             )}
             <ImagePickerComponent onImageSelected={(uri) => setImageUri(uri)} />
+            {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
             <Button title="Guardar Cambios" onPress={handleSaveTask} />
             <Button
               title="Cancelar"
@@ -265,6 +227,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 10,
     borderRadius: 5,
+    marginBottom: 10,
+  },
+  image: {
+    width: "100%",
+    height: 150,
     marginBottom: 10,
   },
 });

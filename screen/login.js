@@ -14,27 +14,28 @@ const LoginScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
-  // Manejar la lógica de inicio de sesión
   const handleLogin = async () => {
     if (!userName || !password) {
       Alert.alert('Error', 'Por favor, complete todos los campos.');
       return;
     }
-  
+
     try {
-      const isAuthenticated =  loginUser(userName, password);
-  
-      if (isAuthenticated) {
+      const result = await loginUser(userName, password);
+
+      if (result.success) {
         Alert.alert('Éxito', 'Inicio de sesión exitoso.');
-        navigation.navigate('Home'); // Cambia 'Home' por la pantalla inicial
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'AppNavigator' }], // Ensure AppNavigator includes 'Home'
+        });
       } else {
-        Alert.alert('Error', 'Usuario o contraseña incorrectos.');
+        Alert.alert('Error', result.message || 'Usuario o contraseña incorrectos.');
       }
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', error.message || 'Ha ocurrido un error.');
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -63,7 +64,6 @@ const LoginScreen = ({ navigation }) => {
 };
 
 export default LoginScreen;
-
 
 const styles = StyleSheet.create({
   container: {

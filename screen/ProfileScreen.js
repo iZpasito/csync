@@ -10,7 +10,7 @@ const ProfileScreen = () => {
 
   useEffect(() => {
     const fetchUserTasks = async () => {
-      const tasks = await loadUserTasks();
+      const tasks = loadUserTasks();
 
       // Calcula estadísticas
       const completed = tasks.filter(task => task.Status === 'Completada').length;
@@ -40,12 +40,12 @@ const ProfileScreen = () => {
       legendFontSize: 14,
     },
   ];
-
+console.log(datosUser);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Perfil</Text>
       <Text>Nombre: {datosUser?.nombre_usuario || 'N/A'}</Text>
-      <Text>Plan actual: {datosUser?.plan || 'Básico'}</Text>
+      <Text>Plan actual: {datosUser?.is_premium == 1 ? 'Premium' : 'Básico'}</Text>
       <View style={styles.summary}>
         <Text>{completedTasks} Tareas Completas</Text>
         <Text>{pendingTasks} Tareas Pendientes</Text>

@@ -1,92 +1,81 @@
-import React, { useState } from 'react';
-import { View, Button, Image, Alert, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from "react";
+import { View, Button, Image, Alert, StyleSheet } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 const ImagePickerComponent = ({ onImageSelected }) => {
-  const [pickedImage, setPickedImage] = useState();
+  const [pickedImage, setPickedImage] = useState(null);
 
   const verifyPermissions = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
+    if (status !== "granted") {
       Alert.alert(
-        'Permisos Insuficientes',
-        'Necesitas otorgar permisos de cámara para usar esta funcionalidad.',
-        [{ text: 'Ok' }]
+        "Permisos Insuficientes",
+        "Se necesitan permisos para usar la cámara.",
+        [{ text: "Ok" }]
       );
       return false;
     }
     return true;
   };
 
-  const takeImageHandler = async () => {
+  const pickImageFromGallery = async () => {
+    try {
+      const imageResult = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      if (!imageResult.canceled) {
+        const selectedUri = imageResult.assets[0].uri;
+        setPickedImage(selectedUri);
+        onImageSelected(selectedUri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "No se pudo seleccionar la imagen. Intenta de nuevo.");
+    }
+  };
+
+  const takePhotoHandler = async () => {
     const hasPermission = await verifyPermissions();
     if (!hasPermission) {
       return;
     }
 
     try {
-      const image = await ImagePicker.launchCameraAsync({
+      const photoResult = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [16, 9],
         quality: 0.8,
       });
 
-      if (!image.canceled ) {
-        setPickedImage(image.assets[0].uri);
-        onImageSelected(image.assets[0].uri);
+      if (!photoResult.canceled) {
+        const selectedUri = photoResult.assets[0].uri;
+        setPickedImage(selectedUri);
+        onImageSelected(selectedUri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Hubo un problema al tomar la foto. Por favor intenta nuevamente.');
-    }
-  };
-
-  const pickImageHandler = async () => {
-    try {
-      const image = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.5,
-      });
-      if (!image.canceled) {
-        setPickedImage(image.assets[0].uri);
-        onImageSelected(image.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Hubo un problema al seleccionar la foto. Por favor intenta nuevamente.');
+      Alert.alert("Error", "No se pudo tomar la foto. Intenta de nuevo.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Button title="Tomar Foto" onPress={takeImageHandler} />
-      <Button title="Elegir desde la Galería" onPress={pickImageHandler} />
-      {pickedImage && (
-        <View style={styles.imagePreview}>
-          <Image style={styles.image} source={{ uri:pickedImage}} />
-        </View>
-      )}
+      <Button title="Elegir Imagen de la Galería" onPress={pickImageFromGallery} />
+      <Button title="Tomar Foto" onPress={takePhotoHandler} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 20,
+    alignItems: "center",
+    marginBottom: 20,
   },
   imagePreview: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    marginBottom: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
+    marginTop: 10,
   },
 });
 

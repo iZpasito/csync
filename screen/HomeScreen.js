@@ -21,30 +21,26 @@ const HomeScreen = () => {
     }
   }, [currentUser]);
 
-  // Fetch users and their task counts
   const fetchUsersWithTaskCounts = async () => {
     try {
       const users = await getAllUsers();
-      const usersWithCounts = await Promise.all(
-        users.map(async (user) => {
-          const taskCount = tasks.filter((task) => task.user_id === user.id).length;
-          return { ...user, taskCount };
-        })
-      );
+      const usersWithCounts = users.map((user) => {
+        const taskCount = tasks.filter((task) => task.user_id === user.id).length;
+        return { ...user, taskCount };
+      });
       setUsersWithTaskCounts(usersWithCounts);
     } catch (error) {
       console.error("Error fetching users and task counts:", error);
     }
   };
 
-  // Toggle premium status for a user
   const handleTogglePremium = async (user) => {
     try {
       const newStatus = user.is_premium === 1 ? 0 : 1;
       const result = await updateUserPremiumStatus(user.id, newStatus);
       if (result.success) {
         Alert.alert("Éxito", result.message);
-        fetchUsersWithTaskCounts();
+        fetchUsersWithTaskCounts(); // Refresh user data
       } else {
         Alert.alert("Error", result.message);
       }
@@ -54,7 +50,6 @@ const HomeScreen = () => {
   };
 
   if (currentUser?.is_admin) {
-    // Admin View
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Gestión de Usuarios</Text>
@@ -67,9 +62,7 @@ const HomeScreen = () => {
               <Text>Tareas asignadas: {item.taskCount}</Text>
               <Text>Estado Premium: {item.is_premium === 1 ? "Sí" : "No"}</Text>
               <Button
-                title={
-                  item.is_premium === 1 ? "Eliminar Premium" : "Hacer Premium"
-                }
+                title={item.is_premium === 1 ? "Eliminar Premium" : "Hacer Premium"}
                 onPress={() => handleTogglePremium(item)}
               />
             </View>
@@ -82,7 +75,7 @@ const HomeScreen = () => {
   // Regular User View
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mis Tareas</Text>
+      <Text style={styles.title}>Lista de Tareas</Text>
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id.toString()}
