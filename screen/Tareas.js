@@ -123,7 +123,6 @@ const Tareas = () => {
         title="Agregar Nueva Tarea"
         onPress={() => navigation.navigate("Calendario")}
       />
-      <Button title="Cerrar Sesión" color="red" onPress={handleLogout} />
 
       {/* Modal para editar tarea */}
       <Modal visible={modalVisible} transparent animationType="slide">

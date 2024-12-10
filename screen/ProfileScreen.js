@@ -10,18 +10,18 @@ const ProfileScreen = () => {
 
   useEffect(() => {
     const fetchUserTasks = async () => {
-      const tasks = loadUserTasks();
+      const tasks = await loadUserTasks();  // Add await here
 
-      // Calcula estadísticas
-      const completed = tasks.filter(task => task.Status === 'Completada').length;
-      const pending = tasks.filter(task => task.Status === 'Pendiente').length;
+      // Calculate statistics
+      const completed = tasks?.filter(task => task.Status === 'Completada').length || 0;
+      const pending = tasks?.filter(task => task.Status === 'Pendiente').length || 0;
 
       setCompletedTasks(completed);
       setPendingTasks(pending);
     };
 
     fetchUserTasks();
-  }, []);
+}, []);
 
   // Configuración de la gráfica
   const chartData = [

@@ -1,54 +1,63 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   View,
   Text,
-  Button,
-  Alert,
+  FlatList,
   StyleSheet,
-  Image,
-  TextInput,
+  TouchableOpacity,
+  Button,
 } from "react-native";
 import { Agenda } from "react-native-calendars";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { PlaceContext } from "../controller/taskController";
-import ImagePickerComponent from "../components/ImagePicker";
+import TaskEditModal from "../components/editmodal";
 
-const CalendarScreen = ({ navigation }) => {
-  const { addTask } = useContext(PlaceContext);
+const CalendarScreen = () => {
+  const { tasks, loadTasks, addTask, updateTask } = useContext(PlaceContext);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [time, setTime] = useState(new Date());
-  const [imageUri, setImageUri] = useState();
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [dayTasks, setDayTasks] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(false);
-    setTime(currentTime);
+  useEffect(() => {
+    if (selectedDate) {
+      filterTasksByDate();
+    }
+  }, [tasks, selectedDate]);
+
+  const filterTasksByDate = () => {
+    const filteredTasks = tasks.filter((task) => task.date === selectedDate);
+    setDayTasks(filteredTasks);
   };
 
-  const handleAddTask = async () => {
-    if (!selectedDate || !title.trim() || !description.trim()) {
-      Alert.alert("Error", "Por favor completa todos los campos requeridos.");
-      return;
-    }
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+    setModalVisible(true);
+  };
 
+  const handleAddTask = () => {
     const newTask = {
-      title,
-      description,
-      time: time.toLocaleTimeString("es-ES", { hour12: false }),
+      title: "",
+      description: "",
+      time: new Date().toLocaleTimeString("es-ES", { hour12: false }),
       date: selectedDate,
-      imageUri,
+      imageUri: null,
     };
+    setEditingTask(newTask); // Prepare the modal for a new task
+    setModalVisible(true);
+  };
 
+  const handleSaveTask = async (updatedTask) => {
     try {
-      await addTask(newTask);
-      Alert.alert("Éxito", "Tarea agregada correctamente.");
-      navigation.navigate("Tareas");
+      if (updatedTask.id) {
+        updateTask(updatedTask.id, updatedTask);
+      } else {
+        addTask(updatedTask);
+      }
+      setModalVisible(false);
+      setEditingTask(null);
+      loadTasks(); // Recarga las tareas
     } catch (error) {
-      console.error("Error al agregar tarea:", error);
-      Alert.alert("Error", "No se pudo agregar la tarea.");
+      console.error("Error al guardar tarea:", error);
     }
   };
 
@@ -59,37 +68,33 @@ const CalendarScreen = ({ navigation }) => {
         onDayPress={(day) => setSelectedDate(day.dateString)}
         selected={selectedDate}
       />
-      <Text style={styles.label}>Título:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Título"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <Text style={styles.label}>Descripción:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Descripción"
-        value={description}
-        onChangeText={setDescription}
-      />
-      <Text style={styles.label}>Imagen:</Text>
-      <ImagePickerComponent onImageSelected={setImageUri} />
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-      <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
-      {showTimePicker && (
-        <DateTimePicker
-          value={time}
-          mode="time"
-          is24Hour
-          display="default"
-          onChange={onTimeChange}
-        />
-      )}
-      <Text style={styles.timeLabel}>
-        Hora seleccionada: {time.toLocaleTimeString("es-ES", { hour12: false })}
+      <Text style={styles.label}>
+        Tareas del día: {selectedDate || "Seleccione un día"}
       </Text>
+      <FlatList
+        data={dayTasks}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.taskContainer}>
+            <Text style={styles.taskTitle}>Título: {item.title}</Text>
+            <Text>Descripción: {item.description}</Text>
+            <Text>Hora: {item.time}</Text>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => handleEditTask(item)}
+            >
+              <Text style={styles.editText}>Editar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
       <Button title="Agregar Tarea" onPress={handleAddTask} />
+      <TaskEditModal
+        visible={modalVisible}
+        task={editingTask}
+        onSave={handleSaveTask}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 };
@@ -103,21 +108,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
+  taskContainer: {
+    backgroundColor: "#e0f7fa",
+    padding: 15,
+    borderRadius: 10,
     marginBottom: 10,
   },
-  image: {
-    width: "100%",
-    height: 150,
-    marginVertical: 10,
+  taskTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
-  timeLabel: {
-    fontSize: 16,
+  editButton: {
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 5,
     marginTop: 10,
+  },
+  editText: {
+    color: "#fff",
+    textAlign: "center",
   },
 });
 
