@@ -5,28 +5,22 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Button,
   Alert,
   Modal,
   TextInput,
   Image,
+  Button,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ImagePickerComponent from "../components/ImagePicker";
+import Icon from "react-native-vector-icons/FontAwesome";
 import { PlaceContext } from "../controller/taskController";
 
 const Tareas = () => {
-  const {
-    tasks,
-    loadTasks,
-    deleteTask,
-    logoutUser,
-    currentUser,
-    updateTask,
-  } = useContext(PlaceContext);
-
+  const { tasks, loadTasks, deleteTask, updateTask } = useContext(PlaceContext);
   const navigation = useNavigation();
+
   const [editingTask, setEditingTask] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -54,38 +48,55 @@ const Tareas = () => {
       return;
     }
 
-    if (editingTask) {
-      const updatedTask = {
-        ...editingTask,
-        title,
-        description,
-        time: time.toLocaleTimeString("es-ES", { hour12: false }),
-        imageUri,
-      };
+    const updatedTask = {
+      ...editingTask,
+      title,
+      description,
+      time: time.toLocaleTimeString("es-ES", { hour12: false }),
+      imageUri,
+    };
 
-      try {
-        await updateTask(editingTask.id, updatedTask);
-        setModalVisible(false);
-        setEditingTask(null);
-      } catch (error) {
-        console.error("Error al guardar la tarea:", error);
-        Alert.alert("Error", "No se pudo guardar la tarea.");
-      }
+    try {
+      await updateTask(editingTask.id, updatedTask);
+      setModalVisible(false);
+      setEditingTask(null);
+      loadTasks();
+    } catch (error) {
+      console.error("Error al guardar la tarea:", error);
+      Alert.alert("Error", "No se pudo guardar la tarea.");
     }
   };
 
-  const handleLogout = () => {
+  const toggleTaskStatus = async (task) => {
+    const updatedTask = {
+      ...task,
+      Status: task.Status === "Pendiente" ? "Completada" : "Pendiente",
+    };
+
+    try {
+      updateTask(task.id, updatedTask);
+      loadTasks(); // Recargar tareas
+    } catch (error) {
+      console.error("Error al actualizar estado de tarea:", error);
+    }
+  };
+
+  const handleDeleteTask = (taskId) => {
     Alert.alert(
-      "Cerrar Sesión",
-      "¿Estás seguro de que deseas cerrar sesión?",
+      "Eliminar Tarea",
+      "¿Estás seguro de que deseas eliminar esta tarea?",
       [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "Cerrar Sesión",
+          text: "Eliminar",
           style: "destructive",
-          onPress: () => {
-            logoutUser();
-            navigation.navigate("Login");
+          onPress: async () => {
+            try {
+              deleteTask(taskId);
+              loadTasks();
+            } catch (error) {
+              console.error("Error al eliminar la tarea:", error);
+            }
           },
         },
       ],
@@ -101,27 +112,40 @@ const Tareas = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.task}>
-            <Text style={styles.taskTitle}>Título: {item.title}</Text>
-            <Text>Fecha: {item.date}</Text>
-            <Text>Hora: {item.time}</Text>
-            <TouchableOpacity
-              onPress={() => handleEditTask(item)}
-              style={styles.editButton}
-            >
-              <Text style={styles.editText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => deleteTask(item.id)}
-              style={styles.deleteButton}
-            >
-              <Text style={styles.deleteText}>Eliminar</Text>
-            </TouchableOpacity>
+            <View style={styles.taskInfo}>
+              <Text style={styles.taskTitle}>Título: {item.title}</Text>
+              <Text>Estado: {item.Status}</Text>
+              <Text>Fecha: {item.date}</Text>
+              <Text>Hora: {item.time}</Text>
+            </View>
+            <View style={styles.iconGroup}>
+              <TouchableOpacity
+                onPress={() => toggleTaskStatus(item)}
+                style={styles.iconButton}
+              >
+                <Icon
+                  name={
+                    item.Status === "Pendiente" ? "clock-o" : "check-circle"
+                  }
+                  size={24}
+                  color={item.Status === "Pendiente" ? "blue" : "green"}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleEditTask(item)}
+                style={styles.iconButton}
+              >
+                <Icon name="edit" size={24} color="blue" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleDeleteTask(item.id)}
+                style={styles.iconButton}
+              >
+                <Icon name="trash" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
-      />
-      <Button
-        title="Agregar Nueva Tarea"
-        onPress={() => navigation.navigate("Calendario")}
       />
 
       {/* Modal para editar tarea */}
@@ -141,24 +165,36 @@ const Tareas = () => {
               value={description}
               onChangeText={setDescription}
             />
-            <Button title="Seleccionar Hora" onPress={() => setShowTimePicker(true)} />
+            <TouchableOpacity
+              onPress={() => setShowTimePicker(true)}
+              style={styles.iconButton}
+            >
+              <Icon name="clock-o" size={24} color="black" />
+              <Text style={styles.timeText}>
+                {time.toLocaleTimeString("es-ES", { hour12: false })}
+              </Text>
+            </TouchableOpacity>
             {showTimePicker && (
               <DateTimePicker
                 value={time}
                 mode="time"
                 is24Hour
                 display="default"
-                onChange={(event, selectedTime) => setTime(selectedTime || time)}
+                onChange={(event, selectedTime) =>
+                  setTime(selectedTime || time)
+                }
               />
             )}
-            <ImagePickerComponent onImageSelected={(uri) => setImageUri(uri)} />
+            <ImagePickerComponent onImageSelected={setImageUri} />
             {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-            <Button title="Guardar Cambios" onPress={handleSaveTask} />
-            <Button
-              title="Cancelar"
-              color="red"
-              onPress={() => setModalVisible(false)}
-            />
+            <View style={styles.buttonRow}>
+              <Button title="Guardar" onPress={handleSaveTask} />
+              <Button
+                title="Cancelar"
+                color="red"
+                onPress={() => setModalVisible(false)}
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -177,34 +213,28 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   task: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#e0e0e0",
     padding: 15,
     marginBottom: 10,
     borderRadius: 10,
   },
+  taskInfo: {
+    flex: 1,
+  },
   taskTitle: {
     fontSize: 18,
     fontWeight: "bold",
   },
-  editButton: {
-    backgroundColor: "blue",
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 5,
+  iconGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  editText: {
-    color: "white",
-    textAlign: "center",
-  },
-  deleteButton: {
-    backgroundColor: "red",
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 5,
-  },
-  deleteText: {
-    color: "white",
-    textAlign: "center",
+  iconButton: {
+    marginHorizontal: 5,
   },
   modalOverlay: {
     flex: 1,
@@ -232,6 +262,15 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 150,
     marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  timeText: {
+    fontSize: 16,
+    marginLeft: 10,
   },
 });
 
